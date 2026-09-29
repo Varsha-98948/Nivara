@@ -153,6 +153,33 @@ function validateMessages(messages: unknown): IncomingMessage[] {
 }
 
 // ---------------------------------------------------------------------------
+// Server-side response sanitization
+// Strip provider/model metadata that must never reach the user.
+// ---------------------------------------------------------------------------
+function sanitizeModelResponse(text: string): string {
+  // Patterns that identify pure provider/model metadata lines.
+  // Matched against each trimmed line individually — legitimate medical text
+  // containing words like "safety", "safe", or "response" is never affected.
+  const METADATA_LINE_PATTERNS: RegExp[] = [
+    // "User Safety: safe", "Response Safety: safe", "Content Safety: low", etc.
+    /^(?:User Safety|Response Safety|Content Safety|Safety Rating|Safety)\s*:\s*\S+\s*$/i,
+    // Bare model self-identification line, e.g. a standalone "Nivara" prefix
+    /^Nivara\s*$/i,
+  ];
+
+  const lines = text.split("\n");
+  const filtered = lines.filter(
+    (line) => !METADATA_LINE_PATTERNS.some((pat) => pat.test(line.trim()))
+  );
+
+  return filtered
+    .join("\n")
+    // Collapse excess blank lines created by removed metadata lines
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+// ---------------------------------------------------------------------------
 // Route handler
 // ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
@@ -226,13 +253,18 @@ export async function POST(req: NextRequest) {
       }
 
       const data = await response.json();
-      const text = data.choices?.[0]?.message?.content;
+      const rawText = data.choices?.[0]?.message?.content;
 
-      if (!text || typeof text !== "string") {
+      if (!rawText || typeof rawText !== "string") {
         throw new Error("Empty or unparseable response from AI provider");
       }
 
-      return NextResponse.json({ content: text, fallback: false });
+      const text = sanitizeModelResponse(rawText);
+
+      // If sanitization consumed the entire message, something is wrong — use raw
+      const finalText = text.length > 0 ? text : rawText.trim();
+
+      return NextResponse.json({ content: finalText, fallback: false });
 
     } catch (err: unknown) {
       lastError = err;

@@ -1,17 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Shield,
-  Clock,
-  MapPin,
-  MessageCircle,
-  ArrowRight,
-  Sparkles,
-  HeartPulse,
-  Activity,
-  CheckCircle2,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronRight, Compass, ShieldAlert, Sparkles } from "lucide-react";
 import NivaraLogo from "./NivaraLogo";
 import { ThemeToggle } from "./ThemeProvider";
 
@@ -19,556 +8,349 @@ interface WelcomeScreenProps {
   onStart: (initialText?: string) => void;
 }
 
-const COMMON_CONCERNS = [
-  "Throbbing headache & light sensitivity",
-  "Sore throat with mild fever",
-  "Persistent dry cough for 3 days",
-  "Stomach ache after dinner",
-];
-
-const FEATURES = [
-  {
-    icon: MessageCircle,
-    title: "Empathetic Symptom Dialogue",
-    desc: "Describe what you're feeling in plain words or voice. Nivara listens and asks focused follow-up questions.",
-    tag: "Voice & Text",
-  },
-  {
-    icon: Shield,
-    title: "Urgency Assessment",
-    desc: "Understand whether you need 112 emergency care, a doctor visit within 24 hours, or home monitoring.",
-    tag: "India Unified 112",
-  },
-  {
-    icon: Clock,
-    title: "Actionable Self-Care",
-    desc: "Receive evidence-based comfort measures, watch-outs, and specific warning signs to track closely.",
-    tag: "Clinical Logic",
-  },
-  {
-    icon: MapPin,
-    title: "Real Facility Navigation",
-    desc: "Enter your 6-digit Indian PIN code to locate nearby hospitals, emergency units, and clinics.",
-    tag: "Live Directory",
-  },
+const QUICK_CONCERNS = [
+  { label: "Headache", prompt: "I've had a persistent headache since this morning" },
+  { label: "Fever", prompt: "I've developed a fever with body aches" },
+  { label: "Stomach pain", prompt: "I have sharp stomach discomfort after eating" },
+  { label: "Minor injury", prompt: "I twisted my ankle and it is swollen" },
 ];
 
 export default function WelcomeScreen({ onStart }: WelcomeScreenProps) {
-  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
-
   return (
     <div
       className="min-h-screen flex flex-col"
       style={{
-        background: "var(--ivory)",
-        color: "var(--charcoal)",
-        transition: "background-color 0.25s ease",
+        backgroundColor: "var(--bg)",
+        color: "var(--text-primary)",
       }}
     >
-      {/* ── Top Navigation ── */}
+      {/* ── Global Unified Header ── */}
       <header
         style={{
-          borderBottom: "1px solid var(--mint-dark)",
-          background: "var(--nav-bg)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          padding: "0 24px",
-          height: 68,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          boxShadow: "var(--shadow-sm)",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--bg)",
+          height: 64,
           position: "sticky",
           top: 0,
-          zIndex: 50,
-          transition: "background-color 0.25s ease, border-color 0.25s ease",
+          zIndex: 40,
         }}
       >
-        <NivaraLogo size={24} />
+        <div className="max-w-5xl mx-auto h-full px-5 sm:px-8 flex items-center justify-between">
+          <NivaraLogo size={23} />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            style={{
-              fontSize: 12,
-              color: "var(--forest-mid)",
-              fontWeight: 600,
-              padding: "5px 12px",
-              border: "1px solid var(--mint-dark)",
-              borderRadius: 99,
-              background: "var(--mint)",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-            className="hidden sm:inline-flex"
-          >
+          <div className="flex items-center gap-3">
             <span
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
               style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                background: "var(--forest-light)",
-                display: "inline-block",
+                color: "var(--text-secondary)",
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
               }}
-            />
-            <span>India Health Navigation</span>
-          </div>
+            >
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  backgroundColor: "var(--accent)",
+                }}
+              />
+              India Care Navigation
+            </span>
 
-          {/* Theme Toggle */}
-          <ThemeToggle />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
-      {/* ── Hero Section ── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-5 py-16 md:py-24">
-        <div
-          className="animate-fade-in-up"
-          style={{ maxWidth: 740, width: "100%", textAlign: "center" }}
-        >
-          {/* Living Health Companion Orb */}
-          <div
-            className="companion-orb mb-8"
-            style={{ width: 140, height: 140, margin: "0 auto 28px" }}
-          >
-            <div
-              className="companion-glow"
-              style={{ width: 130, height: 130 }}
-            />
-            <div
-              className="companion-ring"
-              style={{ width: 120, height: 120 }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                width: 74,
-                height: 74,
-                borderRadius: "50%",
-                background:
-                  "linear-gradient(135deg, var(--forest) 0%, var(--forest-mid) 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                boxShadow: "0 8px 24px rgba(30, 77, 53, 0.35)",
-                border: "2px solid var(--mint-dark)",
-              }}
-              className="animate-float"
-            >
-              <HeartPulse size={34} strokeWidth={2.2} />
-            </div>
+      {/* ── Main Hero Composition ── */}
+      <main className="flex-1 flex flex-col justify-center py-12 md:py-20">
+        <div className="max-w-5xl mx-auto w-full px-5 sm:px-8">
+          {/* Two-Column Editorial Hero */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+            {/* Left Column: Focused Statement & Actions */}
+            <div className="lg:col-span-6 flex flex-col items-start text-left">
+              {/* Subtle Category Eyebrow */}
+              <div
+                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider mb-5 px-2.5 py-1 rounded"
+                style={{
+                  color: "var(--accent)",
+                  backgroundColor: "var(--accent-soft)",
+                  border: "1px solid var(--accent-border)",
+                }}
+              >
+                <span>Health Triage & Direction</span>
+              </div>
 
-            {/* Orbiting Satellite Dots */}
-            <div
-              style={{
-                position: "absolute",
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                background: "var(--amber)",
-                boxShadow: "0 0 10px var(--amber)",
-                animation: "orbit 8s linear infinite",
-              }}
-              title="Concern"
-            />
-            <div
-              style={{
-                position: "absolute",
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "var(--forest-light)",
-                boxShadow: "0 0 8px var(--forest-light)",
-                animation: "orbit-reverse 12s linear infinite",
-              }}
-              title="Navigation"
-            />
-          </div>
-
-          {/* Badge */}
-          <div
-            className="inline-flex items-center gap-2 mb-6"
-            style={{
-              background: "var(--mint)",
-              border: "1px solid var(--mint-dark)",
-              borderRadius: 99,
-              padding: "6px 16px",
-              fontSize: 12.5,
-              color: "var(--forest-mid)",
-              fontWeight: 600,
-              letterSpacing: "0.02em",
-            }}
-          >
-            <Sparkles size={14} color="var(--forest-light)" />
-            <span>Calm Health Intelligence & Care Triage</span>
-          </div>
-
-          {/* Headline */}
-          <h1
-            style={{
-              fontFamily: "var(--font-display), Lora, Georgia, serif",
-              fontSize: "clamp(2.1rem, 5.5vw, 3.5rem)",
-              fontWeight: 600,
-              color: "var(--charcoal)",
-              lineHeight: 1.18,
-              marginBottom: 20,
-              letterSpacing: "-0.025em",
-            }}
-          >
-            Understand your health.{" "}
-            <span
-              style={{
-                color: "var(--forest-light)",
-                background: "linear-gradient(135deg, var(--forest-mid), var(--forest-light))",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              Know what to do next.
-            </span>
-          </h1>
-
-          {/* Subtext */}
-          <p
-            style={{
-              fontSize: "clamp(1.02rem, 2vw, 1.15rem)",
-              color: "var(--charcoal-mid)",
-              lineHeight: 1.68,
-              marginBottom: 36,
-              maxWidth: 580,
-              margin: "0 auto 36px",
-            }}
-          >
-            Describe what you&apos;re experiencing. Nivara gathers the clinical
-            picture, assesses urgency calmly, and directs you to the appropriate care in India.
-          </p>
-
-          {/* Primary CTA Button */}
-          <div className="flex flex-col items-center justify-center gap-3 mb-10">
-            <button
-              id="start-with-nivara-btn"
-              type="button"
-              onClick={() => onStart()}
-              className="interactive-tap"
-              style={{
-                background: "linear-gradient(135deg, var(--forest), var(--forest-mid))",
-                color: "var(--white)",
-                border: "1px solid var(--forest-light)",
-                borderRadius: "var(--radius-sm)",
-                padding: "16px 40px",
-                fontSize: 16.5,
-                fontWeight: 600,
-                cursor: "pointer",
-                boxShadow: "0 6px 20px rgba(30, 77, 53, 0.28)",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 10,
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                  "0 8px 26px rgba(30, 77, 53, 0.35)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
-                (e.currentTarget as HTMLButtonElement).style.boxShadow =
-                  "0 6px 20px rgba(30, 77, 53, 0.28)";
-              }}
-            >
-              <span>Start Health Assessment</span>
-              <ArrowRight size={17} strokeWidth={2.4} />
-            </button>
-
-            <span
-              style={{
-                fontSize: 12,
-                color: "var(--charcoal-light)",
-                letterSpacing: "0.01em",
-              }}
-            >
-              Free · No account needed · India Unified Emergency 112 Ready
-            </span>
-          </div>
-
-          {/* Quick Concern Starter Pills */}
-          <div
-            style={{
-              padding: "18px 20px",
-              background: "var(--white)",
-              border: "1px solid var(--mint-dark)",
-              borderRadius: "var(--radius)",
-              boxShadow: "var(--shadow-sm)",
-              marginBottom: 44,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11.5,
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                color: "var(--charcoal-light)",
-                marginBottom: 12,
-              }}
-            >
-              Or start with a common health concern:
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 8,
-                justifyContent: "center",
-              }}
-            >
-              {COMMON_CONCERNS.map((concern) => (
-                <button
-                  key={concern}
-                  type="button"
-                  onClick={() => onStart(concern)}
-                  className="interactive-tap"
+              {/* Core Statement */}
+              <h1
+                className="font-serif tracking-tight leading-[1.14] mb-4"
+                style={{
+                  fontSize: "clamp(2.2rem, 4.5vw, 3.4rem)",
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                }}
+              >
+                Understand your health.{" "}
+                <span
                   style={{
-                    background: "var(--mint)",
-                    color: "var(--forest-mid)",
-                    border: "1px solid var(--mint-dark)",
-                    borderRadius: 99,
-                    padding: "7px 14px",
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "var(--forest)";
-                    (e.currentTarget as HTMLButtonElement).style.color = "var(--white)";
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--forest)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "var(--mint)";
-                    (e.currentTarget as HTMLButtonElement).style.color = "var(--forest-mid)";
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--mint-dark)";
+                    color: "var(--accent)",
+                    fontStyle: "italic",
+                    fontWeight: 400,
                   }}
                 >
-                  {concern}
+                  Know what to do next.
+                </span>
+              </h1>
+
+              {/* Concise Supporting Copy */}
+              <p
+                className="leading-relaxed mb-7 max-w-lg"
+                style={{
+                  fontSize: "clamp(1.02rem, 1.8vw, 1.12rem)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                Describe what you&apos;re experiencing. Nivara helps you make sense of it
+                and decide what to do next.
+              </p>
+
+              {/* Primary Call to Action */}
+              <div className="flex flex-wrap items-center gap-4 mb-8">
+                <button
+                  id="start-with-nivara-btn"
+                  type="button"
+                  onClick={() => onStart()}
+                  className="interactive-tap inline-flex items-center gap-2.5 text-sm font-semibold px-6 py-3.5 rounded-lg shadow-sm"
+                  style={{
+                    backgroundColor: "var(--botanical)",
+                    color: "var(--botanical-contrast)",
+                    border: "1px solid var(--botanical)",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--botanical-hover)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--botanical)";
+                  }}
+                >
+                  <span>Start with Nivara</span>
+                  <ArrowRight size={15} strokeWidth={2.2} />
                 </button>
+
+                <span
+                  className="text-xs font-medium"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  No sign-up required · Unified 112 Ready
+                </span>
+              </div>
+
+              {/* Integrated Quick Concerns */}
+              <div className="pt-2 border-t border-[var(--border-subtle)] w-full">
+                <div
+                  className="text-[11.5px] uppercase tracking-wider font-semibold mb-2.5"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Try starting with:
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {QUICK_CONCERNS.map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => onStart(item.prompt)}
+                      className="interactive-tap text-xs font-medium px-3 py-1.5 rounded-md"
+                      style={{
+                        backgroundColor: "var(--surface)",
+                        color: "var(--text-secondary)",
+                        border: "1px solid var(--border)",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
+                        (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
+                        (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Actual Product Interaction Trajectory */}
+            <div className="lg:col-span-6">
+              <div
+                className="relative p-6 sm:p-7 rounded-xl border shadow-sm"
+                style={{
+                  backgroundColor: "var(--surface)",
+                  borderColor: "var(--border)",
+                }}
+              >
+                {/* Header status bar */}
+                <div className="flex items-center justify-between pb-4 mb-4 border-b border-[var(--border-subtle)] text-xs">
+                  <div className="flex items-center gap-2 font-medium" style={{ color: "var(--text-muted)" }}>
+                    <Compass size={13} style={{ color: "var(--accent)" }} />
+                    <span>Nivara Clinical Trajectory</span>
+                  </div>
+                  <span
+                    className="font-mono text-[11px] px-2 py-0.5 rounded"
+                    style={{ backgroundColor: "var(--bg-subtle)", color: "var(--text-secondary)" }}
+                  >
+                    LIVE DEMO
+                  </span>
+                </div>
+
+                {/* Trajectory Visual Journey composed of real interface pieces */}
+                <div className="space-y-3 relative">
+                  {/* Trajectory Guide Line */}
+                  <div
+                    className="absolute left-3.5 top-3 bottom-3 w-px"
+                    style={{ backgroundColor: "var(--border)" }}
+                  />
+
+                  {/* Stage 1: User Concern */}
+                  <div className="relative pl-8">
+                    <div
+                      className="absolute left-2.5 top-2.5 w-2 h-2 rounded-full -translate-x-1/2"
+                      style={{ backgroundColor: "var(--accent)" }}
+                    />
+                    <div
+                      className="p-3 rounded-lg text-xs leading-relaxed"
+                      style={{
+                        backgroundColor: "var(--bg-subtle)",
+                        color: "var(--text-primary)",
+                      }}
+                    >
+                      <span className="font-semibold text-[11px] block uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>
+                        01 · Reported Concern
+                      </span>
+                      &ldquo;Throbbing pain in my right temple since morning, gets worse in bright light.&rdquo;
+                    </div>
+                  </div>
+
+                  {/* Stage 2: Clarifying Follow-Up */}
+                  <div className="relative pl-8">
+                    <div
+                      className="absolute left-2.5 top-2.5 w-2 h-2 rounded-full -translate-x-1/2"
+                      style={{ backgroundColor: "var(--text-muted)" }}
+                    />
+                    <div
+                      className="p-3 rounded-lg text-xs leading-relaxed border"
+                      style={{
+                        backgroundColor: "var(--surface)",
+                        borderColor: "var(--border)",
+                        color: "var(--text-secondary)",
+                      }}
+                    >
+                      <span className="font-semibold text-[11px] block uppercase tracking-wider mb-1" style={{ color: "var(--accent)" }}>
+                        02 · Focused Follow-Up
+                      </span>
+                      &ldquo;Do you have any fever, stiff neck, or nausea accompanying the headache?&rdquo;
+                    </div>
+                  </div>
+
+                  {/* Stage 3: Clear Direction & Care Resolution */}
+                  <div className="relative pl-8">
+                    <div
+                      className="absolute left-2.5 top-2.5 w-2 h-2 rounded-full -translate-x-1/2"
+                      style={{ backgroundColor: "var(--urgency-mod)" }}
+                    />
+                    <div
+                      className="p-3.5 rounded-lg border text-xs"
+                      style={{
+                        backgroundColor: "var(--urgency-mod-bg)",
+                        borderColor: "var(--urgency-mod-border)",
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span
+                          className="font-bold uppercase tracking-wider text-[10.5px] px-2 py-0.5 rounded"
+                          style={{
+                            backgroundColor: "var(--surface)",
+                            color: "var(--urgency-mod)",
+                          }}
+                        >
+                          Moderate Urgency
+                        </span>
+                        <span className="text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>
+                          Decision Clarity
+                        </span>
+                      </div>
+                      <div className="font-semibold text-[13px] mb-1" style={{ color: "var(--text-primary)" }}>
+                        Migraine-type presentation
+                      </div>
+                      <p className="text-[11.5px] leading-relaxed mb-2.5" style={{ color: "var(--text-secondary)" }}>
+                        Self-care in a quiet dark room is appropriate now. Consult a physician if pain persists past 48 hours.
+                      </p>
+                      <div
+                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        <span>Verified facilities available by PIN</span>
+                        <ChevronRight size={12} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── 3-Stage Visual Progression Line ── */}
+          <div className="mt-16 pt-10 border-t border-[var(--border)]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  number: "01",
+                  title: "Describe your concern",
+                  description: "Use voice or plain text. No medical terminology needed.",
+                },
+                {
+                  number: "02",
+                  title: "Understand urgency",
+                  description: "Nivara asks concise follow-ups and assesses severity calmly.",
+                },
+                {
+                  number: "03",
+                  title: "Decide what to do next",
+                  description: "Actionable self-care, warning signs, and local care navigation in India.",
+                },
+              ].map((step) => (
+                <div key={step.number} className="flex flex-col text-left">
+                  <div
+                    className="font-mono text-xs font-bold mb-1.5 tracking-wider"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    {step.number}
+                  </div>
+                  <h3
+                    className="font-serif text-base font-semibold mb-1"
+                    style={{ color: "var(--text-primary)" }}
+                  >
+                    {step.title}
+                  </h3>
+                  <p
+                    className="text-xs leading-relaxed"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    {step.description}
+                  </p>
+                </div>
               ))}
             </div>
           </div>
 
-          {/* ── 3-Step Visual Journey ── */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: 14,
-              marginBottom: 48,
-              textAlign: "left",
-            }}
-          >
-            {[
-              {
-                step: "01",
-                label: "Share Concern",
-                desc: "Voice or text input with focused, single-question follow-ups.",
-                icon: Activity,
-              },
-              {
-                step: "02",
-                label: "Assess Urgency",
-                desc: "Emergency, Urgent, Moderate, or Low triage guidance.",
-                icon: Shield,
-              },
-              {
-                step: "03",
-                label: "Navigate Care",
-                desc: "Real hospital & clinic directory filtered by your Indian PIN code.",
-                icon: MapPin,
-              },
-            ].map(({ step, label, desc, icon: StepIcon }, idx) => (
-              <div
-                key={step}
-                onMouseEnter={() => setHoveredStep(idx)}
-                onMouseLeave={() => setHoveredStep(null)}
-                style={{
-                  background: hoveredStep === idx ? "var(--white)" : "var(--card-bg)",
-                  border: `1px solid ${hoveredStep === idx ? "var(--forest-light)" : "var(--mint-dark)"}`,
-                  borderRadius: "var(--radius-sm)",
-                  padding: "18px 18px",
-                  boxShadow: hoveredStep === idx ? "var(--shadow-md)" : "var(--shadow-sm)",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 10,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: "monospace",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "var(--forest-light)",
-                      background: "var(--mint)",
-                      padding: "2px 8px",
-                      borderRadius: 4,
-                    }}
-                  >
-                    STEP {step}
-                  </span>
-                  <StepIcon size={16} color="var(--forest-mid)" />
-                </div>
-                <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: 14.5,
-                    color: "var(--charcoal)",
-                    marginBottom: 4,
-                  }}
-                >
-                  {label}
-                </div>
-                <div
-                  style={{
-                    fontSize: 12.5,
-                    color: "var(--charcoal-light)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {desc}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Feature Cards Grid ── */}
-        <div
-          className="animate-fade-in-up"
-          style={{
-            maxWidth: 820,
-            width: "100%",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: 16,
-          }}
-        >
-          {FEATURES.map(({ icon: Icon, title, desc, tag }) => (
-            <div
-              key={title}
-              style={{
-                background: "var(--white)",
-                border: "1px solid var(--mint-dark)",
-                borderRadius: "var(--radius)",
-                padding: "22px 20px",
-                boxShadow: "var(--shadow-sm)",
-                transition: "box-shadow 0.2s, transform 0.2s",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--shadow-md)";
-                (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--shadow-sm)";
-                (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: 14,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      background: "var(--mint)",
-                      borderRadius: 10,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "1px solid var(--mint-dark)",
-                    }}
-                  >
-                    <Icon size={20} color="var(--forest-mid)" strokeWidth={1.8} />
-                  </div>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: "var(--charcoal-light)",
-                      background: "var(--ivory)",
-                      border: "1px solid var(--mint-dark)",
-                      padding: "2px 8px",
-                      borderRadius: 99,
-                    }}
-                  >
-                    {tag}
-                  </span>
-                </div>
-                <h3
-                  style={{
-                    fontWeight: 600,
-                    fontSize: 15,
-                    color: "var(--charcoal)",
-                    marginBottom: 6,
-                  }}
-                >
-                  {title}
-                </h3>
-                <p
-                  style={{
-                    fontSize: 13,
-                    color: "var(--charcoal-light)",
-                    lineHeight: 1.6,
-                    margin: 0,
-                  }}
-                >
-                  {desc}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Medical Disclaimer ── */}
-        <div
-          className="animate-fade-in"
-          style={{
-            marginTop: 52,
-            padding: "16px 22px",
-            background: "var(--ivory-dark)",
-            border: "1px solid var(--mint-dark)",
-            borderRadius: "var(--radius-sm)",
-            maxWidth: 680,
-            textAlign: "center",
-          }}
-        >
-          <p
-            style={{
-              fontSize: 12,
-              color: "var(--charcoal-light)",
-              lineHeight: 1.65,
-              margin: 0,
-            }}
-          >
-            <strong style={{ color: "var(--charcoal-mid)" }}>Medical Safety Notice:</strong>{" "}
-            Nivara is an automated health triage and navigation assistant designed for users in India.
-            It does not diagnose medical conditions or prescribe treatments. If you are experiencing
-            potentially life-threatening symptoms, call India&apos;s unified emergency number{" "}
-            <strong style={{ color: "var(--red-urgent)" }}>112</strong> or go to your nearest
-            hospital casualty immediately.
-          </p>
+          {/* ── Minimal Medical Safety Disclaimer ── */}
+          <footer className="mt-14 pt-6 border-t border-[var(--border-subtle)] text-center">
+            <p className="text-[11.5px] leading-relaxed max-w-2xl mx-auto" style={{ color: "var(--text-muted)" }}>
+              <strong>Clinical notice:</strong> Nivara is an intelligent health triage and care navigation guide for users in India. It does not provide medical diagnoses or prescriptions. For sudden severe chest pain, stroke signs, difficulty breathing, or severe trauma, call India&apos;s unified emergency number <strong style={{ color: "var(--urgency-emg)" }}>112</strong> or visit the nearest emergency department immediately.
+            </p>
+          </footer>
         </div>
       </main>
     </div>

@@ -161,18 +161,18 @@ export function urgencyConfig(level: UrgencyLevel) {
     case "emergency":
       return {
         label: "Emergency",
-        color: "var(--red-urgent)",
-        bg: "var(--red-light)",
-        border: "#e8a0a0",
+        color: "var(--urgency-emg)",
+        bg: "var(--urgency-emg-bg)",
+        border: "var(--urgency-emg-border)",
         icon: "🚨",
         description: "Seek emergency care immediately. Call 112 or go to the nearest emergency department.",
       };
     case "urgent":
       return {
         label: "Urgent",
-        color: "#b06010",
-        bg: "#fff3e0",
-        border: "#f0c080",
+        color: "var(--urgency-urgent)",
+        bg: "var(--urgency-urgent-bg)",
+        border: "var(--urgency-urgent-border)",
         icon: "⚠️",
         description: "See a doctor or visit urgent care within 24 hours.",
       };
@@ -180,9 +180,9 @@ export function urgencyConfig(level: UrgencyLevel) {
     case "semi-urgent":
       return {
         label: "Moderate",
-        color: "var(--amber)",
-        bg: "var(--amber-light)",
-        border: "#e8c890",
+        color: "var(--urgency-mod)",
+        bg: "var(--urgency-mod-bg)",
+        border: "var(--urgency-mod-border)",
         icon: "🕐",
         description: "Schedule an appointment with your doctor within a few days.",
       };
@@ -190,18 +190,18 @@ export function urgencyConfig(level: UrgencyLevel) {
     case "routine":
       return {
         label: "Low",
-        color: "var(--forest-mid)",
-        bg: "var(--mint)",
-        border: "var(--mint-dark)",
+        color: "var(--urgency-low)",
+        bg: "var(--urgency-low-bg)",
+        border: "var(--urgency-low-border)",
         icon: "✅",
         description: "Self-care is appropriate for now. Monitor your symptoms.",
       };
     default:
       return {
         label: "Assessing",
-        color: "var(--charcoal-light)",
-        bg: "var(--ivory-dark)",
-        border: "#ccc",
+        color: "var(--text-secondary)",
+        bg: "var(--bg-subtle)",
+        border: "var(--border)",
         icon: "💬",
         description: "Gathering information to assess your situation.",
       };
@@ -215,7 +215,19 @@ export function urgencyConfig(level: UrgencyLevel) {
 export function stripTriageBlock(content: string): string {
   if (!content) return "";
 
-  let cleaned = content
+  // --- Defensive: strip any provider/model safety metadata that slipped through ---
+  // Uses line-by-line filter: only removes lines that are purely metadata labels.
+  // Legitimate medical text containing "safety", "safe", "response" is unaffected.
+  const META_PATTERNS: RegExp[] = [
+    /^(?:User Safety|Response Safety|Content Safety|Safety Rating|Safety)\s*:\s*\S+\s*$/i,
+    /^Nivara\s*$/i,
+  ];
+  const preFiltered = content
+    .split("\n")
+    .filter((line) => !META_PATTERNS.some((pat) => pat.test(line.trim())))
+    .join("\n");
+
+  let cleaned = preFiltered
     // Remove fenced TRIAGE_ASSESSMENT blocks (even unclosed)
     .replace(/```TRIAGE_ASSESSMENT[\s\S]*?(?:```|$)/gi, "")
     // Remove fenced json blocks containing triage fields
@@ -236,10 +248,41 @@ export function stripTriageBlock(content: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
-  // If the entire message was only the internal JSON block, provide calm natural text
+  // If the entire message was only the internal JSON block, return empty so
+  // the caller can decide whether to render a bubble at all.
   if (!cleaned) {
-    return "I have completed your health triage assessment. You can review your assessment summary and recommended care steps in the assessment card.";
+    return "";
   }
 
   return cleaned;
+}
+
+/**
+ * Returns true when the assistant content (after stripping the TRIAGE_ASSESSMENT block)
+ * contains no meaningful conversational text for the user — i.e. it is either
+ * empty or is only one of the known auto-generated assessment-completion fillers.
+ *
+ * Deliberately narrow: only matches exact known patterns, not any sentence
+ * containing words like "assessment", "summary", or "care".
+ */
+export function isAssessmentOnlyMessage(rawContent: string): boolean {
+  // Must contain a triage block to be considered an assessment message
+  const hasTriage =
+    /```TRIAGE_ASSESSMENT/i.test(rawContent) ||
+    /"status"\s*:\s*"Assessment Complete"/i.test(rawContent);
+  if (!hasTriage) return false;
+
+  const stripped = stripTriageBlock(rawContent);
+
+  // Empty after stripping → nothing meaningful to show
+  if (!stripped) return true;
+
+  // The one known auto-generated filler sentence (the old fallback text)
+  const FILLER_PATTERNS = [
+    /^I have completed your health triage assessment\.?\s*/i,
+    /^Your health triage assessment (is|has been) complete\.?\s*/i,
+    /^Assessment complete\.?\s*You can review/i,
+  ];
+  const strippedClean = stripped.trim();
+  return FILLER_PATTERNS.some((p) => p.test(strippedClean) && strippedClean.replace(p, "").trim() === "");
 }

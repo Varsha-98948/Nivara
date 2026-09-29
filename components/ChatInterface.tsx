@@ -7,17 +7,15 @@ import {
   ChevronRight,
   AlertTriangle,
   RefreshCw,
-  Info,
   Mic,
   MicOff,
-  User,
-  HeartPulse,
-  ArrowRight,
   MapPin,
+  ArrowUp,
+  FileText,
 } from "lucide-react";
 import NivaraLogo from "./NivaraLogo";
 import { Message, TriageResult } from "@/lib/types";
-import { urgencyConfig, stripTriageBlock } from "@/lib/utils";
+import { urgencyConfig, stripTriageBlock, isAssessmentOnlyMessage } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeProvider";
 
 interface ChatInterfaceProps {
@@ -37,27 +35,27 @@ interface ChatInterfaceProps {
   isFallback: boolean;
 }
 
-// ---------------------------------------------------------------------------
-// Contextual suggestion chips
-// ---------------------------------------------------------------------------
 const QUICK_REPLIES = [
   "Mild",
   "Moderate",
   "Severe",
+  "Started today",
+  "Getting worse",
   "Yes",
   "No",
-  "Not sure",
-  "Getting worse",
-  "Started today",
 ];
 
-// ---------------------------------------------------------------------------
-// MessageBubble — renders one chat message with calm typography & visual hierarchy
-// ---------------------------------------------------------------------------
+const STARTERS = [
+  "I've had a headache since morning",
+  "My throat has been sore for 2 days",
+  "I have stomach cramps after eating",
+  "I've had a fever since last night",
+];
+
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === "user";
-  // Strip raw JSON block before displaying AI messages
   const displayContent = isUser ? msg.content : stripTriageBlock(msg.content);
+
   const paragraphs = displayContent
     .split(/\n{2,}/)
     .map((p) => p.trim())
@@ -76,7 +74,7 @@ function MessageBubble({ msg }: { msg: Message }) {
       const parts = content.split(/(\*\*[^*]+\*\*)/g);
       const renderedParts = parts.map((part, j) =>
         part.startsWith("**") && part.endsWith("**") ? (
-          <strong key={j} style={{ fontWeight: 600 }}>
+          <strong key={j} className="font-semibold text-[var(--text-primary)]">
             {part.slice(2, -2)}
           </strong>
         ) : (
@@ -88,24 +86,15 @@ function MessageBubble({ msg }: { msg: Message }) {
         return (
           <div
             key={lineIdx}
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 8,
-              margin: "3px 0",
-              paddingLeft: 4,
-            }}
+            className="flex items-start gap-2 my-1 pl-1 text-[13.5px] leading-relaxed"
           >
             <span
-              style={{
-                color: isUser ? "var(--mint)" : "var(--forest)",
-                fontSize: 13,
-                marginTop: 2,
-              }}
+              className="text-xs mt-1"
+              style={{ color: isUser ? "var(--accent)" : "var(--accent)" }}
             >
               •
             </span>
-            <span style={{ flex: 1 }}>{renderedParts}</span>
+            <span className="flex-1">{renderedParts}</span>
           </div>
         );
       }
@@ -113,9 +102,9 @@ function MessageBubble({ msg }: { msg: Message }) {
       return (
         <p
           key={lineIdx}
+          className="my-1.5 leading-relaxed text-[14px]"
           style={{
-            margin: lineIdx === 0 ? "0 0 4px" : "4px 0",
-            lineHeight: 1.65,
+            color: isUser ? "var(--botanical-contrast)" : "var(--text-primary)",
           }}
         >
           {renderedParts}
@@ -126,70 +115,44 @@ function MessageBubble({ msg }: { msg: Message }) {
 
   return (
     <div
-      className={isUser ? "animate-slide-right" : "animate-slide-left"}
-      style={{
-        display: "flex",
-        justifyContent: isUser ? "flex-end" : "flex-start",
-        marginBottom: 18,
-        alignItems: "flex-end",
-        gap: 10,
-      }}
+      className={`flex ${isUser ? "justify-end animate-slide-right" : "justify-start animate-slide-left"} mb-4`}
     >
-      {!isUser && (
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            background: "var(--mint)",
-            border: "1.5px solid var(--mint-dark)",
-            color: "var(--forest)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            marginBottom: 2,
-            boxShadow: "0 1px 3px rgba(30,77,53,0.08)",
-          }}
-        >
-          <HeartPulse size={16} strokeWidth={2.2} />
-        </div>
-      )}
-
       <div
         style={{
-          maxWidth: isUser ? "78%" : "82%",
-          padding: isUser ? "12px 18px" : "15px 20px",
-          borderRadius: isUser ? "18px 18px 4px 18px" : "4px 18px 18px 18px",
-          background: isUser ? "var(--forest)" : "var(--white)",
-          color: isUser ? "var(--white)" : "var(--charcoal)",
-          border: isUser ? "none" : "1px solid var(--mint-dark)",
-          boxShadow: isUser
-            ? "0 2px 8px rgba(30,77,53,0.18)"
-            : "var(--shadow-sm)",
-          wordBreak: "break-word",
-          fontSize: 14.5,
+          maxWidth: isUser ? "80%" : "85%",
+          backgroundColor: isUser ? "var(--botanical)" : "var(--surface)",
+          color: isUser ? "var(--botanical-contrast)" : "var(--text-primary)",
+          border: isUser ? "1px solid var(--botanical)" : "1px solid var(--border)",
+          borderRadius: isUser ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+          padding: "12px 16px",
+          boxShadow: "var(--shadow-xs)",
         }}
       >
+        {/* Label for assistant messages */}
+        {!isUser && (
+          <div
+            className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5"
+            style={{ color: "var(--accent)" }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
+            <span>Nivara</span>
+          </div>
+        )}
+
         {paragraphs.length > 0 ? (
           paragraphs.map((p, pIdx) => (
-            <div
-              key={pIdx}
-              style={{ marginBottom: pIdx < paragraphs.length - 1 ? 10 : 0 }}
-            >
+            <div key={pIdx}>
               {renderFormattedText(p)}
             </div>
           ))
         ) : (
-          <p style={{ margin: 0, opacity: 0.5 }}>—</p>
+          <p className="m-0 opacity-50">—</p>
         )}
+
         <div
+          className="text-[10px] mt-1.5 font-mono text-right"
           style={{
-            fontSize: 10.5,
-            opacity: isUser ? 0.75 : 0.5,
-            marginTop: 6,
-            textAlign: isUser ? "right" : "left",
-            letterSpacing: "0.02em",
+            color: isUser ? "rgba(247, 245, 238, 0.6)" : "var(--text-muted)",
           }}
         >
           {new Date(msg.timestamp).toLocaleTimeString([], {
@@ -198,108 +161,36 @@ function MessageBubble({ msg }: { msg: Message }) {
           })}
         </div>
       </div>
-
-      {isUser && (
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            background: "var(--forest)",
-            color: "var(--white)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            marginBottom: 2,
-            boxShadow: "0 2px 6px rgba(30,77,53,0.2)",
-          }}
-        >
-          <User size={15} strokeWidth={2.2} />
-        </div>
-      )}
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Polished Typing indicator (calm pulsing status)
-// ---------------------------------------------------------------------------
 function TypingIndicator() {
   return (
-    <div
-      className="animate-fade-in"
-      style={{
-        display: "flex",
-        alignItems: "flex-end",
-        gap: 10,
-        marginBottom: 18,
-      }}
-    >
+    <div className="flex justify-start mb-4 animate-fade-in">
       <div
+        className="flex items-center gap-2.5 px-4 py-3 rounded-lg border text-xs"
         style={{
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
-          background: "var(--mint)",
-          border: "1.5px solid var(--mint-dark)",
-          color: "var(--forest)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          boxShadow: "0 1px 3px rgba(30,77,53,0.08)",
+          backgroundColor: "var(--surface)",
+          borderColor: "var(--border)",
+          color: "var(--text-secondary)",
+          borderRadius: "12px 12px 12px 2px",
+          boxShadow: "var(--shadow-xs)",
         }}
       >
-        <HeartPulse size={16} strokeWidth={2.2} />
-      </div>
-      <div
-        style={{
-          background: "var(--white)",
-          border: "1px solid var(--mint-dark)",
-          borderRadius: "4px 18px 18px 18px",
-          padding: "13px 18px",
-          boxShadow: "var(--shadow-sm)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+        <div className="flex items-center gap-1.5">
           <div className="typing-dot" />
           <div className="typing-dot" />
           <div className="typing-dot" />
         </div>
-        <span
-          style={{
-            fontSize: 12.5,
-            color: "var(--charcoal-light)",
-            fontWeight: 500,
-            letterSpacing: "0.01em",
-          }}
-        >
-          Nivara is evaluating…
+        <span className="text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>
+          Nivara is synthesizing…
         </span>
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Quick-start prompts shown on empty state
-// ---------------------------------------------------------------------------
-const STARTERS = [
-  "I've had a headache since this morning",
-  "My throat has been sore for 2 days",
-  "I've had a fever since last night",
-  "My chest feels tight when I breathe",
-  "I have a persistent cough for a week",
-  "My stomach has been hurting since yesterday",
-];
-
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
 export default function ChatInterface({
   messages,
   isLoading,
@@ -377,7 +268,6 @@ export default function ChatInterface({
     }
   };
 
-  // Auto-scroll to bottom on new messages / loading state change / triage result
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, triageResult]);
@@ -389,202 +279,134 @@ export default function ChatInterface({
     }
   };
 
-  const urgency = triageResult ? urgencyConfig(triageResult.urgency) : null;
+  const urgency = triageResult?.urgency ? urgencyConfig(triageResult.urgency) : null;
 
   return (
     <div
+      className="min-h-screen flex flex-col"
       style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        background: "var(--ivory)",
+        backgroundColor: "var(--bg)",
+        color: "var(--text-primary)",
       }}
     >
-      {/* ── Header ── */}
+      {/* ── Global Unified Header ── */}
       <header
         style={{
-          background: "var(--white)",
-          borderBottom: "1px solid var(--mint-dark)",
-          padding: "0 20px",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--bg)",
           height: 64,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexShrink: 0,
-          boxShadow: "var(--shadow-sm)",
-          zIndex: 10,
+          position: "sticky",
+          top: 0,
+          zIndex: 40,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <NivaraLogo size={20} />
-          {isFallback && (
-            <span
-              style={{
-                fontSize: 11.5,
-                fontWeight: 600,
-                color: "var(--amber)",
-                background: "var(--amber-light)",
-                border: "1px solid #e8c890",
-                borderRadius: 99,
-                padding: "3px 10px",
-              }}
-            >
-              Demo mode
-            </span>
-          )}
-        </div>
+        <div className="max-w-5xl mx-auto h-full px-5 sm:px-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <NivaraLogo size={22} />
+            {isFallback && (
+              <span
+                className="text-[11px] font-mono px-2 py-0.5 rounded uppercase tracking-wider"
+                style={{
+                  backgroundColor: "var(--urgency-mod-bg)",
+                  color: "var(--urgency-mod)",
+                  border: "1px solid var(--urgency-mod-border)",
+                }}
+              >
+                Demo Mode
+              </span>
+            )}
+          </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {triageResult && (
+          <div className="flex items-center gap-2.5">
+            {triageResult && (
+              <button
+                id="view-triage-btn"
+                type="button"
+                onClick={onViewTriage}
+                className="interactive-tap inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md"
+                style={{
+                  backgroundColor: urgency?.bg ?? "var(--accent-soft)",
+                  color: urgency?.color ?? "var(--accent)",
+                  border: `1px solid ${urgency?.border ?? "var(--accent-border)"}`,
+                }}
+              >
+                <FileText size={13} />
+                <span>View Summary</span>
+                <ChevronRight size={12} />
+              </button>
+            )}
+
             <button
-              id="view-triage-btn"
-              onClick={onViewTriage}
+              id="reset-chat-btn"
+              type="button"
+              onClick={onReset}
+              title="Start a new symptom assessment"
+              className="interactive-tap inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md"
               style={{
-                background: urgency?.bg ?? "var(--mint)",
-                color: urgency?.color ?? "var(--forest)",
-                border: `1px solid ${urgency?.border ?? "var(--mint-dark)"}`,
-                borderRadius: "var(--radius-xs)",
-                padding: "7px 14px",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                transition: "opacity 0.2s",
+                backgroundColor: "var(--surface)",
+                border: "1px solid var(--border)",
+                color: "var(--text-secondary)",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
               }}
             >
-              {urgency?.icon} View Summary
-              <ChevronRight size={14} />
+              <RotateCcw size={13} />
+              <span className="hidden sm:inline">New assessment</span>
             </button>
-          )}
-          <button
-            id="reset-chat-btn"
-            onClick={onReset}
-            title="Start a new symptom assessment"
-            style={{
-              background: "transparent",
-              border: "1px solid var(--mint-dark)",
-              borderRadius: "var(--radius-xs)",
-              padding: "7px 12px",
-              cursor: "pointer",
-              color: "var(--charcoal-mid)",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 13,
-              fontWeight: 500,
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "var(--mint)";
-              (e.currentTarget as HTMLButtonElement).style.color = "var(--forest)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-              (e.currentTarget as HTMLButtonElement).style.color = "var(--charcoal-mid)";
-            }}
-          >
-            <RotateCcw size={14} />
-            <span className="hidden sm:inline">New assessment</span>
-          </button>
-          <ThemeToggle />
+
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
-      {/* ── Messages area ── */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "24px 20px 12px",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div style={{ maxWidth: 740, width: "100%", margin: "0 auto" }}>
-          {/* Empty state */}
+      {/* ── Chat Messages Stream (Aligned max-w-2xl) ── */}
+      <div className="flex-1 overflow-y-auto px-5 sm:px-8 py-6">
+        <div className="max-w-2xl mx-auto w-full">
+          {/* Empty State / Conversation Starter */}
           {messages.length === 0 && (
-            <div
-              className="animate-fade-in-up"
-              style={{ textAlign: "center", paddingTop: 36, paddingBottom: 20 }}
-            >
+            <div className="text-center py-12 animate-fade-in-up">
               <div
+                className="w-10 h-10 mx-auto rounded-lg flex items-center justify-center mb-3"
                 style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: "50%",
-                  background: "var(--mint)",
-                  border: "2px solid var(--mint-dark)",
-                  color: "var(--forest)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 16px",
-                  boxShadow: "0 2px 8px rgba(30,77,53,0.1)",
+                  backgroundColor: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  color: "var(--accent)",
                 }}
               >
-                <HeartPulse size={28} strokeWidth={2} />
+                <NivaraLogo size={18} showWordmark={false} />
               </div>
-              <h2
-                style={{
-                  fontFamily: "Lora, Georgia, serif",
-                  fontSize: 24,
-                  fontWeight: 600,
-                  color: "var(--charcoal)",
-                  marginBottom: 8,
-                }}
-              >
-                Hi, I&apos;m Nivara
+              <h2 className="font-serif text-lg font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
+                How can Nivara help you today?
               </h2>
-              <p
-                style={{
-                  color: "var(--charcoal-mid)",
-                  fontSize: 15,
-                  lineHeight: 1.65,
-                  marginBottom: 28,
-                  maxWidth: 480,
-                  margin: "0 auto 28px",
-                }}
-              >
-                Tell me what you&apos;re experiencing. I&apos;ll ask a few focused
-                questions, assess urgency, and guide you toward the right care.
+              <p className="text-xs max-w-md mx-auto mb-6" style={{ color: "var(--text-secondary)" }}>
+                Describe any symptom, pain, or health question in plain words.
               </p>
 
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 10,
-                  justifyContent: "center",
-                }}
-              >
+              <div className="flex flex-wrap justify-center gap-2 max-w-md mx-auto">
                 {STARTERS.map((s) => (
                   <button
                     key={s}
-                    onClick={() => {
-                      onInputChange(s);
-                      inputRef.current?.focus();
-                    }}
+                    type="button"
+                    onClick={() => onSend(s)}
+                    className="interactive-tap text-xs font-medium px-3 py-1.5 rounded-md"
                     style={{
-                      background: "var(--white)",
-                      border: "1px solid var(--mint-dark)",
-                      borderRadius: "var(--radius-sm)",
-                      padding: "9px 16px",
-                      fontSize: 13.5,
-                      color: "var(--forest-mid)",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                      fontWeight: 500,
-                      boxShadow: "var(--shadow-sm)",
+                      backgroundColor: "var(--surface)",
+                      color: "var(--text-secondary)",
+                      border: "1px solid var(--border)",
                     }}
                     onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "var(--mint)";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--forest-light)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
+                      (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
                     }}
                     onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "var(--white)";
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--mint-dark)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
+                      (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
                     }}
                   >
                     {s}
@@ -594,224 +416,123 @@ export default function ChatInterface({
             </div>
           )}
 
-          {/* Message list */}
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} msg={msg} />
-          ))}
+          {/* Messages List */}
+          {messages.map((msg) =>
+            // Suppress the bubble entirely when an assistant message contains
+            // ONLY a TRIAGE_ASSESSMENT (empty conversational text after strip)
+            // or the known auto-generated assessment-completion filler sentence.
+            msg.role === "assistant" && isAssessmentOnlyMessage(msg.content) ? null : (
+              <MessageBubble key={msg.id} msg={msg} />
+            )
+          )}
 
-          {/* Typing indicator */}
+          {/* Typing Indicator */}
           {isLoading && <TypingIndicator />}
 
-          {/* Error + retry */}
+          {/* Error Banner */}
           {error && (
             <div
-              className="animate-fade-in"
+              className="flex items-center gap-3 p-3.5 mb-4 rounded-lg border text-xs"
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                background: "var(--red-light)",
-                border: "1px solid #e8a0a0",
-                borderRadius: "var(--radius-sm)",
-                padding: "12px 16px",
-                marginBottom: 14,
+                backgroundColor: "var(--urgency-emg-bg)",
+                borderColor: "var(--urgency-emg-border)",
+                color: "var(--urgency-emg)",
               }}
             >
-              <AlertTriangle size={16} color="var(--red-urgent)" style={{ flexShrink: 0 }} />
-              <span
-                style={{
-                  flex: 1,
-                  fontSize: 14,
-                  color: "var(--charcoal)",
-                  lineHeight: 1.5,
-                }}
-              >
-                {error}
-              </span>
-              <div style={{ display: "flex", gap: 8 }}>
-                {canRetry && (
-                  <button
-                    id="retry-btn"
-                    onClick={onRetry}
-                    style={{
-                      background: "var(--forest)",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "var(--radius-xs)",
-                      padding: "6px 14px",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                    }}
-                  >
-                    <RefreshCw size={13} />
-                    Retry
-                  </button>
-                )}
+              <AlertTriangle size={15} className="shrink-0" />
+              <span className="flex-1 leading-relaxed">{error}</span>
+              {canRetry && (
                 <button
-                  onClick={onClearError}
+                  id="retry-btn"
+                  type="button"
+                  onClick={onRetry}
+                  className="interactive-tap font-semibold px-2.5 py-1 rounded border text-xs shrink-0"
                   style={{
-                    background: "transparent",
-                    border: "1px solid #e8a0a0",
-                    borderRadius: "var(--radius-xs)",
-                    padding: "6px 12px",
-                    fontSize: 13,
-                    color: "var(--charcoal-mid)",
-                    cursor: "pointer",
+                    backgroundColor: "var(--surface)",
+                    borderColor: "var(--urgency-emg-border)",
+                    color: "var(--urgency-emg)",
                   }}
                 >
-                  Dismiss
+                  <RefreshCw size={12} className="inline mr-1" />
+                  Retry
                 </button>
-              </div>
+              )}
+              <button
+                type="button"
+                onClick={onClearError}
+                className="opacity-70 hover:opacity-100 text-xs shrink-0"
+              >
+                Dismiss
+              </button>
             </div>
           )}
 
-          {/* Completed assessment card in message stream */}
+          {/* Completed Assessment Resolution Banner */}
           {triageResult && !error && (
             <div
               id="completed-triage-card"
-              className="animate-fade-in-up"
-              onClick={onViewTriage}
+              className="mt-6 mb-6 p-4 rounded-lg border shadow-sm animate-fade-in-up"
               style={{
-                marginTop: 18,
-                marginBottom: 20,
-                background: "var(--white)",
-                border: `1.5px solid ${urgency?.border ?? "var(--mint-dark)"}`,
-                borderRadius: "var(--radius)",
-                padding: "18px 22px",
-                boxShadow: "var(--shadow-md)",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
+                backgroundColor: "var(--surface)",
+                borderColor: urgency?.border ?? "var(--border)",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 10,
-                  flexWrap: "wrap",
-                  gap: 8,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      background: urgency?.bg ?? "var(--mint)",
-                      color: urgency?.color ?? "var(--forest)",
-                      border: `1px solid ${urgency?.border ?? "var(--mint-dark)"}`,
-                      padding: "4px 12px",
-                      borderRadius: 99,
-                      fontSize: 12.5,
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
-                    <span>{urgency?.icon}</span>
-                    <span>{urgency?.label} Urgency</span>
-                  </span>
-                  <span style={{ fontSize: 13, color: "var(--charcoal-light)", fontWeight: 500 }}>
-                    Assessment Ready
-                  </span>
-                </div>
+              <div className="flex items-center justify-between mb-2">
                 <span
+                  className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
                   style={{
-                    fontSize: 13,
-                    color: "var(--forest-mid)",
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
+                    backgroundColor: urgency?.bg ?? "var(--accent-soft)",
+                    color: urgency?.color ?? "var(--accent)",
                   }}
                 >
-                  View Full Report <ChevronRight size={14} />
+                  {urgency?.label ?? "Assessing"} Priority
+                </span>
+                <span className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
+                  Clinical Evaluation Complete
                 </span>
               </div>
 
-              <p
-                style={{
-                  margin: "0 0 14px",
-                  fontSize: 14.5,
-                  color: "var(--charcoal)",
-                  lineHeight: 1.6,
-                }}
-              >
-                {triageResult.summary ||
-                  "Your symptoms have been evaluated based on health triage guidelines."}
+              <div className="font-serif text-sm font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
+                {triageResult.nextStep || "Recommended next step ready"}
+              </div>
+
+              <p className="text-xs leading-relaxed mb-3.5" style={{ color: "var(--text-secondary)" }}>
+                {triageResult.summary}
               </p>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="flex flex-wrap items-center gap-2.5">
                 <button
-                  id="view-full-assessment-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onViewTriage();
-                  }}
+                  type="button"
+                  onClick={onViewTriage}
+                  className="interactive-tap inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-md"
                   style={{
-                    width: "100%",
-                    background: "var(--forest)",
-                    color: "var(--white)",
-                    border: "none",
-                    borderRadius: "var(--radius-sm)",
-                    padding: "11px 18px",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    boxShadow: "0 2px 6px rgba(30,77,53,0.2)",
-                    transition: "background 0.15s ease",
+                    backgroundColor: "var(--botanical)",
+                    color: "var(--botanical-contrast)",
                   }}
                 >
-                  <span>View Clinical Guidance & Next Steps</span>
-                  <ArrowRight size={15} />
+                  <span>Open Assessment Guidance</span>
+                  <ChevronRight size={13} />
                 </button>
 
-                {(urgency?.label === "Emergency" || urgency?.label === "Urgent") && onFindCare && (
+                {onFindCare && (
                   <button
-                    id="chat-direct-find-care-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onFindCare();
-                    }}
+                    type="button"
+                    onClick={onFindCare}
+                    className="interactive-tap inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-md"
                     style={{
-                      width: "100%",
-                      background: "transparent",
-                      color: urgency?.color ?? "var(--forest)",
-                      border: `1.5px solid ${urgency?.border ?? "var(--mint-dark)"}`,
-                      borderRadius: "var(--radius-sm)",
-                      padding: "9px 18px",
-                      fontSize: 13.5,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                      transition: "all 0.15s ease",
+                      backgroundColor: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      color: "var(--text-secondary)",
                     }}
                     onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "var(--mint)";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
                     }}
                     onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
                     }}
                   >
-                    <MapPin size={14} />
-                    <span>
-                      {urgency?.label === "Emergency"
-                        ? "Locate Nearest Emergency Department"
-                        : "Find Urgent Care Centers Near You"}
-                    </span>
+                    <MapPin size={13} />
+                    <span>Find Facilities by PIN</span>
                   </button>
                 )}
               </div>
@@ -822,163 +543,77 @@ export default function ChatInterface({
         </div>
       </div>
 
-      {/* ── Persistent Urgency Banner (when assessment is active) ── */}
-      {triageResult && urgency && urgency.label !== "Assessing" && (
-        <div
-          style={{
-            background: urgency.bg,
-            borderTop: `1px solid ${urgency.border}`,
-            padding: "10px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <AlertTriangle size={14} color={urgency.color} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: urgency.color }}>
-              {urgency.label}:
-            </span>
-            <span style={{ fontSize: 13, color: "var(--charcoal-mid)" }}>
-              {urgency.description}
-            </span>
-          </div>
-          <button
-            onClick={onViewTriage}
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: urgency.color,
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              flexShrink: 0,
-            }}
-          >
-            Details <ChevronRight size={13} />
-          </button>
-        </div>
-      )}
-
-      {/* ── Input Area ── */}
-      <div
+      {/* ── Fixed Chat Input Container (Aligned max-w-2xl) ── */}
+      <footer
         style={{
-          background: "var(--white)",
-          borderTop: "1px solid var(--mint-dark)",
-          padding: "12px 20px 14px",
-          flexShrink: 0,
+          borderTop: "1px solid var(--border)",
+          backgroundColor: "var(--bg)",
+          padding: "12px 20px 16px",
         }}
       >
-        <div style={{ maxWidth: 740, margin: "0 auto" }}>
-          {/* Contextual Quick Reply Chips */}
+        <div className="max-w-2xl mx-auto w-full">
+          {/* Quick Contextual Replies */}
           {messages.length > 0 && !triageResult && !isLoading && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                overflowX: "auto",
-                paddingBottom: 10,
-                scrollbarWidth: "none",
-              }}
-            >
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-2.5 mb-1 scrollbar-none">
               <span
-                style={{
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  color: "var(--charcoal-light)",
-                  whiteSpace: "nowrap",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                  marginRight: 2,
-                }}
+                className="text-[10.5px] uppercase font-bold tracking-wider mr-1 shrink-0"
+                style={{ color: "var(--text-muted)" }}
               >
-                Suggestions:
+                Quick:
               </span>
-              {QUICK_REPLIES.map((reply) => (
+              {QUICK_REPLIES.map((r) => (
                 <button
-                  key={reply}
-                  onClick={() => onSend(reply)}
+                  key={r}
+                  type="button"
+                  onClick={() => onSend(r)}
                   disabled={isLoading}
+                  className="interactive-tap text-xs font-medium px-2.5 py-1 rounded-md shrink-0"
                   style={{
-                    background: "var(--ivory)",
-                    border: "1px solid var(--mint-dark)",
-                    borderRadius: 99,
-                    padding: "5px 12px",
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    color: "var(--forest)",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    transition: "all 0.15s ease",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+                    backgroundColor: "var(--surface)",
+                    color: "var(--text-secondary)",
+                    border: "1px solid var(--border)",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "var(--mint)";
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--forest-light)";
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
+                    (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "var(--ivory)";
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--mint-dark)";
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
+                    (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
                   }}
                 >
-                  {reply}
+                  {r}
                 </button>
               ))}
             </div>
           )}
 
-          {/* Listening status indicator when microphone is active */}
+          {/* Voice listening indicator */}
           {isListening && (
             <div
-              className="animate-fade-in"
+              className="inline-flex items-center gap-2 mb-2 px-2.5 py-1 rounded-md text-xs font-medium"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                background: "var(--red-light)",
-                border: "1px solid #e8a0a0",
-                borderRadius: 99,
-                padding: "4px 10px",
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--red-urgent)",
-                marginBottom: 8,
+                backgroundColor: "var(--accent-soft)",
+                color: "var(--accent)",
+                border: "1px solid var(--accent-border)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 3, height: 16 }}>
+              <div className="flex items-center gap-0.5 h-3">
                 <div className="voice-wave-bar" />
                 <div className="voice-wave-bar" />
                 <div className="voice-wave-bar" />
                 <div className="voice-wave-bar" />
               </div>
-              <span>Listening… speak clearly into your mic</span>
+              <span>Listening… speak your symptom</span>
             </div>
           )}
 
-          {/* Input container */}
+          {/* Input Box */}
           <div
+            className="flex items-end gap-2 p-2 rounded-xl border shadow-xs"
             style={{
-              display: "flex",
-              gap: 8,
-              alignItems: "flex-end",
-              background: "var(--ivory-dark)",
-              border: "1.5px solid var(--mint-dark)",
-              borderRadius: "var(--radius-sm)",
-              padding: "8px 10px 8px 14px",
-              transition: "border-color 0.2s, box-shadow 0.2s",
-            }}
-            onFocusCapture={(e) => {
-              (e.currentTarget as HTMLDivElement).style.borderColor = "var(--forest-light)";
-              (e.currentTarget as HTMLDivElement).style.boxShadow = "0 0 0 3px rgba(45,107,74,0.1)";
-            }}
-            onBlurCapture={(e) => {
-              (e.currentTarget as HTMLDivElement).style.borderColor = "var(--mint-dark)";
-              (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
+              backgroundColor: "var(--surface)",
+              borderColor: "var(--border)",
             }}
           >
             <textarea
@@ -996,20 +631,10 @@ export default function ChatInterface({
               }
               rows={1}
               disabled={isLoading}
+              className="flex-1 bg-transparent border-none outline-none resize-none text-[14px] leading-relaxed p-1.5"
               style={{
-                flex: 1,
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                resize: "none",
-                fontSize: 14.5,
-                color: "var(--charcoal)",
-                lineHeight: 1.55,
-                fontFamily: "inherit",
+                color: "var(--text-primary)",
                 maxHeight: 120,
-                overflowY: "auto",
-                opacity: isLoading ? 0.6 : 1,
-                padding: "3px 0",
               }}
               onInput={(e) => {
                 const el = e.currentTarget;
@@ -1018,7 +643,7 @@ export default function ChatInterface({
               }}
             />
 
-            {/* Voice microphone button (if browser supports Web Speech API) */}
+            {/* Voice Input Button */}
             {speechSupported && (
               <button
                 type="button"
@@ -1026,107 +651,40 @@ export default function ChatInterface({
                 onClick={toggleListening}
                 disabled={isLoading}
                 title={isListening ? "Stop listening" : "Speak your message"}
+                className="interactive-tap w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "var(--radius-xs)",
-                  background: isListening ? "var(--red-light)" : "transparent",
-                  color: isListening ? "var(--red-urgent)" : "var(--charcoal-mid)",
-                  border: isListening ? "1px solid #e8a0a0" : "none",
-                  cursor: isLoading ? "not-allowed" : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  transition: "all 0.2s ease",
+                  backgroundColor: isListening ? "var(--accent-soft)" : "transparent",
+                  color: isListening ? "var(--accent)" : "var(--text-muted)",
                 }}
               >
-                {isListening ? (
-                  <MicOff size={17} strokeWidth={2.2} />
-                ) : (
-                  <Mic size={17} strokeWidth={2} />
-                )}
+                {isListening ? <MicOff size={16} /> : <Mic size={16} />}
               </button>
             )}
 
-            {/* Send button */}
+            {/* Send Button */}
             <button
               id="send-message-btn"
+              type="button"
               onClick={() => onSend()}
-              disabled={!input.trim() || isLoading}
+              disabled={isLoading || !input.trim()}
               title="Send message (Enter)"
+              className="interactive-tap w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: "var(--radius-xs)",
-                background:
-                  input.trim() && !isLoading
-                    ? "var(--forest)"
-                    : "var(--mint-dark)",
-                color:
-                  input.trim() && !isLoading
-                    ? "var(--white)"
-                    : "var(--charcoal-light)",
-                border: "none",
+                backgroundColor: input.trim() && !isLoading ? "var(--botanical)" : "var(--bg-subtle)",
+                color: input.trim() && !isLoading ? "var(--botanical-contrast)" : "var(--text-muted)",
                 cursor: input.trim() && !isLoading ? "pointer" : "not-allowed",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                transition: "all 0.2s ease",
-                boxShadow:
-                  input.trim() && !isLoading
-                    ? "0 2px 6px rgba(30,77,53,0.25)"
-                    : "none",
               }}
             >
-              <Send size={16} strokeWidth={2.2} />
+              <ArrowUp size={16} strokeWidth={2.2} />
             </button>
           </div>
 
-          {/* Subtle disclaimer & shortcut hint */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginTop: 8,
-              fontSize: 11.5,
-              color: "var(--charcoal-light)",
-              flexWrap: "wrap",
-              gap: 6,
-            }}
-          >
-            <span>Nivara is an AI health triage assistant, not a doctor.</span>
-            <span>
-              <kbd
-                style={{
-                  background: "var(--ivory-dark)",
-                  border: "1px solid var(--mint-dark)",
-                  padding: "1px 5px",
-                  borderRadius: 4,
-                  fontSize: 10.5,
-                }}
-              >
-                Enter
-              </kbd>{" "}
-              to send ·{" "}
-              <kbd
-                style={{
-                  background: "var(--ivory-dark)",
-                  border: "1px solid var(--mint-dark)",
-                  padding: "1px 5px",
-                  borderRadius: 4,
-                  fontSize: 10.5,
-                }}
-              >
-                Shift+Enter
-              </kbd>{" "}
-              for newline
-            </span>
+          <div className="flex items-center justify-between text-[11px] mt-2 px-1" style={{ color: "var(--text-muted)" }}>
+            <span>Shift + Enter for new line</span>
+            <span>Emergency in India? Call <strong>112</strong></span>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

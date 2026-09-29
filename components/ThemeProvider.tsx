@@ -79,29 +79,38 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       id="theme-toggle-btn"
       onClick={toggleTheme}
       aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-      className={`theme-toggle-btn ${className}`}
+      className={`theme-toggle-btn interactive-tap ${className}`}
       title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
       style={{
-        width: 36,
-        height: 36,
-        borderRadius: "50%",
+        width: 34,
+        height: 34,
+        borderRadius: 8,
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--mint)",
-        border: "1px solid var(--mint-dark)",
-        color: "var(--forest)",
+        background: "var(--surface)",
+        border: "1px solid var(--border)",
+        color: "var(--text-secondary)",
         cursor: "pointer",
-        transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-        boxShadow: "var(--shadow-sm)",
+        transition: "all 0.15s ease",
+        boxShadow: "var(--shadow-xs)",
         flexShrink: 0,
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
+        (e.currentTarget as HTMLButtonElement).style.color = "var(--text-primary)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
+        (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
       }}
     >
       {theme === "dark" ? (
-        <Sun size={17} strokeWidth={2.2} className="animate-spin-once" />
+        <Sun size={15} strokeWidth={2} />
       ) : (
-        <Moon size={17} strokeWidth={2.2} />
+        <Moon size={15} strokeWidth={2} />
       )}
     </button>
   );
 }
+
