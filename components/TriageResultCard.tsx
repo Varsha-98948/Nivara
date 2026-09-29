@@ -13,6 +13,7 @@ import {
   Stethoscope,
   Info,
   HeartPulse,
+  RotateCcw,
 } from "lucide-react";
 import { TriageResult } from "@/lib/types";
 import { urgencyConfig } from "@/lib/utils";
@@ -21,6 +22,7 @@ interface TriageResultCardProps {
   result: TriageResult;
   onBack: () => void;
   onFindCare: () => void;
+  onNewAssessment: () => void;
 }
 
 /** Helper component for clean card sections */
@@ -144,6 +146,7 @@ export default function TriageResultCard({
   result,
   onBack,
   onFindCare,
+  onNewAssessment,
 }: TriageResultCardProps) {
   const cfg = urgencyConfig(result.urgency);
   const isEmergency = result.urgency === "emergency";
@@ -213,21 +216,54 @@ export default function TriageResultCard({
           Back to conversation
         </button>
 
-        <div style={{ textAlign: "right" }}>
-          <h1
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ textAlign: "right" }} className="hidden sm:block">
+            <h1
+              style={{
+                fontFamily: "Lora, Georgia, serif",
+                fontSize: 17,
+                fontWeight: 600,
+                color: "var(--charcoal)",
+                margin: 0,
+              }}
+            >
+              Clinical Triage Summary
+            </h1>
+            <p style={{ fontSize: 11.5, color: "var(--charcoal-light)", margin: 0 }}>
+              {result.status || "Assessment Complete"}
+            </p>
+          </div>
+
+          <button
+            id="triage-new-assessment-header-btn"
+            onClick={onNewAssessment}
+            title="Start a new symptom assessment"
             style={{
-              fontFamily: "Lora, Georgia, serif",
-              fontSize: 17,
-              fontWeight: 600,
-              color: "var(--charcoal)",
-              margin: 0,
+              background: "transparent",
+              border: "1px solid var(--mint-dark)",
+              borderRadius: "var(--radius-xs)",
+              padding: "7px 12px",
+              cursor: "pointer",
+              color: "var(--charcoal-mid)",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 13,
+              fontWeight: 500,
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "var(--mint)";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--forest)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--charcoal-mid)";
             }}
           >
-            Clinical Triage Summary
-          </h1>
-          <p style={{ fontSize: 11.5, color: "var(--charcoal-light)", margin: 0 }}>
-            {result.status || "Assessment Complete"}
-          </p>
+            <RotateCcw size={14} />
+            <span>New assessment</span>
+          </button>
         </div>
       </header>
 
@@ -711,6 +747,59 @@ export default function TriageResultCard({
               <MapPin size={16} />
               <span>{isEmergency ? "Find Emergency Rooms" : "Find Nearby Care"}</span>
               <ChevronRight size={14} />
+            </button>
+          </div>
+
+          {/* ── 8. Start New Assessment Action ── */}
+          <div
+            style={{
+              background: "var(--white)",
+              border: "1px solid var(--mint-dark)",
+              borderRadius: "var(--radius)",
+              padding: "18px 24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 12,
+              boxShadow: "var(--shadow-sm)",
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14.5, color: "var(--charcoal)", marginBottom: 2 }}>
+                Need to evaluate another symptom or check on someone else?
+              </div>
+              <div style={{ fontSize: 13, color: "var(--charcoal-light)" }}>
+                Start a fresh consultation while keeping your session responsive.
+              </div>
+            </div>
+
+            <button
+              id="start-new-assessment-footer-btn"
+              onClick={onNewAssessment}
+              style={{
+                background: "transparent",
+                color: "var(--forest)",
+                border: "1.5px solid var(--forest-light)",
+                borderRadius: "var(--radius-xs)",
+                padding: "9px 18px",
+                fontSize: 13.5,
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "var(--mint)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+              }}
+            >
+              <RotateCcw size={14} />
+              <span>Start New Assessment</span>
             </button>
           </div>
 

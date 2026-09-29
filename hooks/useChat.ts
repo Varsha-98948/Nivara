@@ -12,18 +12,22 @@ export function useChat() {
   // Keep a ref to the last failed message text so we can retry it
   const lastFailedInput = useRef<string | null>(null);
 
+  const isSendingRef = useRef(false);
+
   const triageResult: TriageResult | null = hasTriage(messages);
 
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!content.trim() || isLoading) return;
+      const trimmed = content.trim();
+      if (!trimmed || isLoading || isSendingRef.current) return;
 
+      isSendingRef.current = true;
       lastFailedInput.current = null;
 
       const userMsg: Message = {
         id: `user-${Date.now()}`,
         role: "user",
-        content: content.trim(),
+        content: trimmed,
         timestamp: new Date(),
       };
 
@@ -74,6 +78,7 @@ export function useChat() {
         setMessages((prev) => prev.slice(0, -1));
       } finally {
         setIsLoading(false);
+        isSendingRef.current = false;
       }
     },
     [messages, isLoading]
@@ -93,6 +98,7 @@ export function useChat() {
     setError(null);
     setIsFallback(false);
     lastFailedInput.current = null;
+    isSendingRef.current = false;
   }, []);
 
   const clearError = useCallback(() => setError(null), []);

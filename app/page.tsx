@@ -40,8 +40,11 @@ export default function Home() {
     setView("welcome");
   };
 
-  // Auto-navigate to triage when assessment arrives and user is in chat
-  // (handled via the banner in ChatInterface, so no auto-redirect here)
+  const handleStartNewAssessment = () => {
+    reset();
+    setInput("");
+    setView("chat");
+  };
 
   return (
     <>
@@ -54,8 +57,9 @@ export default function Home() {
           input={input}
           onInputChange={setInput}
           onSend={handleSend}
-          onReset={handleReset}
+          onReset={handleStartNewAssessment}
           onViewTriage={() => setView("triage")}
+          onFindCare={() => setView("finder")}
           triageResult={triageResult}
           error={error}
           onRetry={retry}
@@ -70,6 +74,7 @@ export default function Home() {
           result={triageResult}
           onBack={() => setView("chat")}
           onFindCare={() => setView("finder")}
+          onNewAssessment={handleStartNewAssessment}
         />
       )}
 
@@ -77,6 +82,7 @@ export default function Home() {
         <HealthcareFinder
           urgency={triageResult?.urgency ?? null}
           onBack={() => setView(triageResult ? "triage" : "chat")}
+          onNewAssessment={handleStartNewAssessment}
         />
       )}
     </>

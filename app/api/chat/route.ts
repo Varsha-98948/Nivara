@@ -174,9 +174,6 @@ export async function POST(req: NextRequest) {
   }
 
   // --- Gemini call (with retry for transient 503 overload) ---
-  console.log(`[Nivara] API key present: ${!!apiKey} | Key length: ${apiKey.length}`);
-  console.log(`[Nivara] Using model: ${GEMINI_MODEL} | Messages in history: ${messages.length}`);
-
   const ai = new GoogleGenAI({ apiKey });
 
   // Build history (all messages except the last one)

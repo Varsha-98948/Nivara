@@ -16,6 +16,7 @@ import {
   HeartPulse,
   Navigation,
   CheckCircle2,
+  RotateCcw,
 } from "lucide-react";
 import { UrgencyLevel } from "@/lib/types";
 import { urgencyConfig } from "@/lib/utils";
@@ -30,6 +31,7 @@ import {
 interface HealthcareFinderProps {
   onBack: () => void;
   urgency: UrgencyLevel;
+  onNewAssessment?: () => void;
 }
 
 const CATEGORY_TABS: { key: CareCategory; label: string; icon: React.ReactNode }[] = [
@@ -39,7 +41,11 @@ const CATEGORY_TABS: { key: CareCategory; label: string; icon: React.ReactNode }
   { key: "clinic", label: "Doctor / Clinic", icon: <Stethoscope size={14} /> },
 ];
 
-export default function HealthcareFinder({ onBack, urgency }: HealthcareFinderProps) {
+export default function HealthcareFinder({
+  onBack,
+  urgency,
+  onNewAssessment,
+}: HealthcareFinderProps) {
   // If user came with urgent/emergency triage, default category to emergency/hospital
   const initialCategory: CareCategory =
     urgency === "emergency" ? "emergency" : urgency === "urgent" ? "hospital" : "all";
@@ -154,21 +160,56 @@ export default function HealthcareFinder({ onBack, urgency }: HealthcareFinderPr
           Back to summary
         </button>
 
-        <div style={{ textAlign: "right" }}>
-          <h1
-            style={{
-              fontFamily: "Lora, Georgia, serif",
-              fontSize: 17,
-              fontWeight: 600,
-              color: "var(--charcoal)",
-              margin: 0,
-            }}
-          >
-            Healthcare Navigation
-          </h1>
-          <p style={{ fontSize: 11.5, color: "var(--charcoal-light)", margin: 0 }}>
-            PIN-code based facility locator
-          </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ textAlign: "right" }} className="hidden sm:block">
+            <h1
+              style={{
+                fontFamily: "Lora, Georgia, serif",
+                fontSize: 17,
+                fontWeight: 600,
+                color: "var(--charcoal)",
+                margin: 0,
+              }}
+            >
+              Healthcare Navigation
+            </h1>
+            <p style={{ fontSize: 11.5, color: "var(--charcoal-light)", margin: 0 }}>
+              PIN-code based facility locator
+            </p>
+          </div>
+
+          {onNewAssessment && (
+            <button
+              id="finder-new-assessment-header-btn"
+              onClick={onNewAssessment}
+              title="Start a new symptom assessment"
+              style={{
+                background: "transparent",
+                border: "1px solid var(--mint-dark)",
+                borderRadius: "var(--radius-xs)",
+                padding: "7px 12px",
+                cursor: "pointer",
+                color: "var(--charcoal-mid)",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 13,
+                fontWeight: 500,
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "var(--mint)";
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--forest)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--charcoal-mid)";
+              }}
+            >
+              <RotateCcw size={14} />
+              <span>New assessment</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -841,8 +882,71 @@ export default function HealthcareFinder({ onBack, urgency }: HealthcareFinderPr
             </a>
           </div>
 
+          {/* ── Navigation Bottom Bar ── */}
+          <div
+            style={{
+              marginTop: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 12,
+              padding: "16px 20px",
+              background: "var(--white)",
+              border: "1px solid var(--mint-dark)",
+              borderRadius: "var(--radius)",
+              boxShadow: "var(--shadow-sm)",
+            }}
+          >
+            <button
+              type="button"
+              onClick={onBack}
+              style={{
+                background: "transparent",
+                border: "1px solid var(--mint-dark)",
+                borderRadius: "var(--radius-xs)",
+                padding: "8px 16px",
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+                color: "var(--charcoal-mid)",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <ArrowLeft size={14} />
+              <span>Back to Triage Guidance</span>
+            </button>
+
+            {onNewAssessment && (
+              <button
+                type="button"
+                id="finder-new-assessment-footer-btn"
+                onClick={onNewAssessment}
+                style={{
+                  background: "var(--forest)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "var(--radius-xs)",
+                  padding: "8px 18px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  boxShadow: "0 2px 6px rgba(30,77,53,0.2)",
+                }}
+              >
+                <RotateCcw size={14} />
+                <span>Start New Assessment</span>
+              </button>
+            )}
+          </div>
+
           {/* ── Medical Disclaimer ── */}
-          <footer style={{ marginTop: 24, textAlign: "center", padding: "0 12px" }}>
+          <footer style={{ marginTop: 20, textAlign: "center", padding: "0 12px" }}>
             <p
               style={{
                 fontSize: 12,

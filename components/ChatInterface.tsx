@@ -13,6 +13,7 @@ import {
   User,
   HeartPulse,
   ArrowRight,
+  MapPin,
 } from "lucide-react";
 import NivaraLogo from "./NivaraLogo";
 import { Message, TriageResult } from "@/lib/types";
@@ -26,6 +27,7 @@ interface ChatInterfaceProps {
   onSend: (text?: string) => void;
   onReset: () => void;
   onViewTriage: () => void;
+  onFindCare?: () => void;
   triageResult: TriageResult | null;
   error: string | null;
   onRetry: () => void;
@@ -305,6 +307,7 @@ export default function ChatInterface({
   onSend,
   onReset,
   onViewTriage,
+  onFindCare,
   triageResult,
   error,
   onRetry,
@@ -457,7 +460,7 @@ export default function ChatInterface({
           <button
             id="reset-chat-btn"
             onClick={onReset}
-            title="Start a new session"
+            title="Start a new symptom assessment"
             style={{
               background: "transparent",
               border: "1px solid var(--mint-dark)",
@@ -482,7 +485,7 @@ export default function ChatInterface({
             }}
           >
             <RotateCcw size={14} />
-            <span className="hidden sm:inline">New session</span>
+            <span className="hidden sm:inline">New assessment</span>
           </button>
         </div>
       </header>
@@ -742,33 +745,74 @@ export default function ChatInterface({
                   "Your symptoms have been evaluated based on health triage guidelines."}
               </p>
 
-              <button
-                id="view-full-assessment-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onViewTriage();
-                }}
-                style={{
-                  width: "100%",
-                  background: "var(--forest)",
-                  color: "var(--white)",
-                  border: "none",
-                  borderRadius: "var(--radius-sm)",
-                  padding: "11px 18px",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  boxShadow: "0 2px 6px rgba(30,77,53,0.2)",
-                  transition: "background 0.15s ease",
-                }}
-              >
-                <span>View Full Clinical Summary & Next Steps</span>
-                <ArrowRight size={15} />
-              </button>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <button
+                  id="view-full-assessment-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewTriage();
+                  }}
+                  style={{
+                    width: "100%",
+                    background: "var(--forest)",
+                    color: "var(--white)",
+                    border: "none",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "11px 18px",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    boxShadow: "0 2px 6px rgba(30,77,53,0.2)",
+                    transition: "background 0.15s ease",
+                  }}
+                >
+                  <span>View Clinical Guidance & Next Steps</span>
+                  <ArrowRight size={15} />
+                </button>
+
+                {(urgency?.label === "Emergency" || urgency?.label === "Urgent") && onFindCare && (
+                  <button
+                    id="chat-direct-find-care-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFindCare();
+                    }}
+                    style={{
+                      width: "100%",
+                      background: "transparent",
+                      color: urgency?.color ?? "var(--forest)",
+                      border: `1.5px solid ${urgency?.border ?? "var(--mint-dark)"}`,
+                      borderRadius: "var(--radius-sm)",
+                      padding: "9px 18px",
+                      fontSize: 13.5,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      transition: "all 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.background = "var(--mint)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                    }}
+                  >
+                    <MapPin size={14} />
+                    <span>
+                      {urgency?.label === "Emergency"
+                        ? "Locate Nearest Emergency Department"
+                        : "Find Urgent Care Centers Near You"}
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
