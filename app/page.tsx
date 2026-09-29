@@ -25,7 +25,12 @@ export default function Home() {
     canRetry,
   } = useChat();
 
-  const handleStart = () => setView("chat");
+  const handleStart = (initialText?: string) => {
+    setView("chat");
+    if (initialText && typeof initialText === "string") {
+      sendMessage(initialText);
+    }
+  };
 
   const handleSend = async (overrideText?: string) => {
     const text = (typeof overrideText === "string" ? overrideText : input).trim();

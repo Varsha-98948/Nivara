@@ -18,6 +18,7 @@ import {
 import NivaraLogo from "./NivaraLogo";
 import { Message, TriageResult } from "@/lib/types";
 import { urgencyConfig, stripTriageBlock } from "@/lib/utils";
+import { ThemeToggle } from "./ThemeProvider";
 
 interface ChatInterfaceProps {
   messages: Message[];
@@ -487,6 +488,7 @@ export default function ChatInterface({
             <RotateCcw size={14} />
             <span className="hidden sm:inline">New assessment</span>
           </button>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -948,16 +950,13 @@ export default function ChatInterface({
                 marginBottom: 8,
               }}
             >
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: "50%",
-                  background: "var(--red-urgent)",
-                  animation: "pulse-dot 1s ease infinite",
-                }}
-              />
-              <span>Listening… speak your symptom</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 3, height: 16 }}>
+                <div className="voice-wave-bar" />
+                <div className="voice-wave-bar" />
+                <div className="voice-wave-bar" />
+                <div className="voice-wave-bar" />
+              </div>
+              <span>Listening… speak clearly into your mic</span>
             </div>
           )}
 

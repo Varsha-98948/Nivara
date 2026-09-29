@@ -3,31 +3,52 @@ import { Message, TriageResult, UrgencyLevel } from "./types";
 // ---------------------------------------------------------------------------
 // Parse the structured TRIAGE_ASSESSMENT JSON block from AI text
 // ---------------------------------------------------------------------------
-const TRIAGE_DELIMITER_RE = /```TRIAGE_ASSESSMENT\s*([\s\S]*?)```/i;
-
 export function parseTriageBlock(content: string): TriageResult | null {
-  const match = content.match(TRIAGE_DELIMITER_RE);
-  if (!match) return null;
+  if (!content) return null;
 
-  try {
-    const raw = JSON.parse(match[1].trim()) as Record<string, unknown>;
+  // 1. Try matching ```TRIAGE_ASSESSMENT ... ``` or ```json ... ``` or ``` ... ```
+  const blockMatch =
+    content.match(/```(?:TRIAGE_ASSESSMENT|json)?\s*([\s\S]*?)```/i) ||
+    content.match(/TRIAGE_ASSESSMENT[:\s]*([\s\S]*?)(?=\n\n|$)/i);
 
-    const urgency = normaliseUrgency(String(raw.urgency ?? ""));
+  let jsonCandidate = blockMatch ? blockMatch[1].trim() : "";
 
-    return {
-      status: String(raw.status ?? "Assessment Complete"),
-      urgency,
-      symptoms: String(raw.symptoms ?? ""),
-      summary: String(raw.summary ?? ""),
-      possible_explanations: String(raw.possible_explanations ?? ""),
-      nextStep: String(raw.recommended_action ?? raw.nextStep ?? ""),
-      selfCare: String(raw.self_care ?? raw.selfCare ?? ""),
-      warningSigns: String(raw.warning_signs ?? raw.warningSigns ?? ""),
-    };
-  } catch {
-    // JSON parse failed — fall through to legacy parser
-    return null;
+  // 2. If no fenced block, search for an unfenced JSON object containing triage fields
+  if (!jsonCandidate || !jsonCandidate.includes("{")) {
+    const rawObjectMatch = content.match(/(\{[\s\S]*?"(?:status|urgency)"[\s\S]*?\})/i);
+    if (rawObjectMatch) {
+      jsonCandidate = rawObjectMatch[1].trim();
+    }
   }
+
+  if (jsonCandidate) {
+    // Clean up potential leading/trailing non-JSON artifacts
+    const start = jsonCandidate.indexOf("{");
+    const end = jsonCandidate.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+      jsonCandidate = jsonCandidate.slice(start, end + 1);
+    }
+
+    try {
+      const raw = JSON.parse(jsonCandidate) as Record<string, unknown>;
+      const urgency = normaliseUrgency(String(raw.urgency ?? ""));
+
+      return {
+        status: String(raw.status ?? "Assessment Complete"),
+        urgency,
+        symptoms: String(raw.symptoms ?? ""),
+        summary: String(raw.summary ?? ""),
+        possible_explanations: String(raw.possible_explanations ?? ""),
+        nextStep: String(raw.recommended_action ?? raw.nextStep ?? ""),
+        selfCare: String(raw.self_care ?? raw.selfCare ?? ""),
+        warningSigns: String(raw.warning_signs ?? raw.warningSigns ?? ""),
+      };
+    } catch {
+      // JSON parse failed — fall through to legacy parser
+    }
+  }
+
+  return null;
 }
 
 /** Normalise whatever urgency string the model returns to our enum. */
@@ -56,6 +77,7 @@ function detectLegacyUrgency(text: string): UrgencyLevel {
   const lower = text.toLowerCase();
   if (
     lower.includes("emergency") ||
+    lower.includes("call 112") ||
     lower.includes("call 911") ||
     lower.includes("go to the er") ||
     lower.includes("urgency level:** emergency")
@@ -143,7 +165,7 @@ export function urgencyConfig(level: UrgencyLevel) {
         bg: "var(--red-light)",
         border: "#e8a0a0",
         icon: "🚨",
-        description: "Seek emergency care immediately. Call 911 or go to the nearest ER.",
+        description: "Seek emergency care immediately. Call 112 or go to the nearest emergency department.",
       };
     case "urgent":
       return {
@@ -186,9 +208,38 @@ export function urgencyConfig(level: UrgencyLevel) {
   }
 }
 
+/**
+ * Remove all visible manifestations of the internal TRIAGE_ASSESSMENT JSON protocol,
+ * including fenced blocks, raw JSON objects, markdown headers, and unclosed delimiters.
+ */
 export function stripTriageBlock(content: string): string {
-  return content
+  if (!content) return "";
+
+  let cleaned = content
+    // Remove fenced TRIAGE_ASSESSMENT blocks (even unclosed)
     .replace(/```TRIAGE_ASSESSMENT[\s\S]*?(?:```|$)/gi, "")
+    // Remove fenced json blocks containing triage fields
     .replace(/```json\s*\{[\s\S]*?"(?:urgency|status)"[\s\S]*?(?:```|$)/gi, "")
+    // Remove any code block containing triage fields
+    .replace(/```[\s\S]*?"(?:status|urgency)"\s*:[\s\S]*?(?:```|$)/gi, "")
+    // Remove TRIAGE_ASSESSMENT prefixes followed by JSON
+    .replace(/TRIAGE_ASSESSMENT\s*:\s*\{[\s\S]*?\}/gi, "")
+    .replace(/TRIAGE_ASSESSMENT\s*\{[\s\S]*?\}/gi, "")
+    // Remove any remaining TRIAGE_ASSESSMENT marker lines
+    .replace(/^.*TRIAGE_ASSESSMENT.*$/gim, "")
+    // Remove unfenced raw JSON objects containing triage assessment fields
+    .replace(/\{\s*"(?:status|urgency)"[\s\S]*?"(?:recommended_action|warning_signs|self_care|possible_explanations|symptoms|summary)"[\s\S]*?\}/gi, "")
+    .replace(/\{[\s\S]*?"status"\s*:\s*"Assessment Complete"[\s\S]*?\}/gi, "")
+    // Clean up empty code fences
+    .replace(/```\s*```/g, "")
+    // Collapse excess blank lines
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  // If the entire message was only the internal JSON block, provide calm natural text
+  if (!cleaned) {
+    return "I have completed your health triage assessment. You can review your assessment summary and recommended care steps in the assessment card.";
+  }
+
+  return cleaned;
 }

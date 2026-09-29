@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { TriageResult } from "@/lib/types";
 import { urgencyConfig } from "@/lib/utils";
+import { ThemeToggle } from "./ThemeProvider";
 
 interface TriageResultCardProps {
   result: TriageResult;
@@ -264,6 +265,7 @@ export default function TriageResultCard({
             <RotateCcw size={14} />
             <span>New assessment</span>
           </button>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -362,11 +364,11 @@ export default function TriageResultCard({
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Phone size={20} color="white" />
                   <span style={{ fontSize: 14.5, fontWeight: 600 }}>
-                    Emergency Services: Call 911 Immediately
+                    Emergency Services: Call 112 Immediately
                   </span>
                 </div>
                 <a
-                  href="tel:911"
+                  href="tel:112"
                   style={{
                     background: "white",
                     color: "var(--red-urgent)",
@@ -378,7 +380,7 @@ export default function TriageResultCard({
                     boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                   }}
                 >
-                  Call 911 Now
+                  Call 112 Now
                 </a>
               </div>
             </div>
@@ -818,7 +820,7 @@ export default function TriageResultCard({
                 margin: 0,
               }}
             >
-              <strong>Medical Disclaimer:</strong> Nivara is an AI health triage and care navigation tool. It provides automated triage assessments for informational purposes and does not provide medical diagnoses, treatment plans, or prescriptions. In the event of a medical emergency, call 911 or visit your nearest emergency department immediately.
+              <strong>Medical Disclaimer:</strong> Nivara is an AI health triage and care navigation tool. It provides automated triage assessments for informational purposes and does not provide medical diagnoses, treatment plans, or prescriptions. In the event of a medical emergency, call 112 or visit your nearest emergency department immediately.
             </p>
           </footer>
         </div>

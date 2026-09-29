@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Nivara colour palette */
+  /* Nivara Light Palette: warm ivory, deep forest, muted mint, charcoal */
   --ivory: #faf8f4;
   --ivory-dark: #f0ece3;
   --forest: #1e4d35;
@@ -21,14 +21,50 @@
 
   --background: var(--ivory);
   --foreground: var(--charcoal);
+  --card-bg: var(--white);
+  --card-border: var(--mint-dark);
+  --nav-bg: rgba(255, 255, 255, 0.92);
+  --subtle-glow: rgba(30, 77, 53, 0.08);
+
   --font-body: "Inter", system-ui, sans-serif;
   --font-display: "Lora", Georgia, serif;
-  --shadow-sm: 0 1px 3px rgba(30, 77, 53, 0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 12px rgba(30, 77, 53, 0.08), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 8px 24px rgba(30, 77, 53, 0.10), 0 4px 8px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(30, 77, 53, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 14px rgba(30, 77, 53, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 28px rgba(30, 77, 53, 0.12), 0 4px 10px rgba(0, 0, 0, 0.05);
+
   --radius: 16px;
   --radius-sm: 10px;
   --radius-xs: 6px;
+}
+
+html.dark {
+  /* Nivara Dark Palette: rich obsidian forest, soft luminous mint, quiet charcoal */
+  --ivory: #0b130e;
+  --ivory-dark: #111d16;
+  --forest: #23583c;
+  --forest-mid: #2f734f;
+  --forest-light: #48a573;
+  --mint: #15261d;
+  --mint-dark: #223c2e;
+  --charcoal: #eaf1ed;
+  --charcoal-mid: #c2d2c9;
+  --charcoal-light: #8ba295;
+  --amber: #e69138;
+  --amber-light: #2c1e10;
+  --red-urgent: #e64c4c;
+  --red-light: #2b1414;
+  --white: #142018;
+
+  --background: var(--ivory);
+  --foreground: var(--charcoal);
+  --card-bg: #142018;
+  --card-border: #223c2e;
+  --nav-bg: rgba(18, 28, 22, 0.92);
+  --subtle-glow: rgba(74, 222, 128, 0.06);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
 }
 
 @theme inline {
@@ -42,6 +78,7 @@
 
 html {
   scroll-behavior: smooth;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 body {
@@ -51,55 +88,118 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Scrollbar */
+/* Custom Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--ivory-dark); }
 ::-webkit-scrollbar-thumb { background: var(--mint-dark); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--forest-light); }
 
-/* Animations */
+/* ── Animation Keyframes ── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(18px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
 @keyframes slideInRight {
   from { opacity: 0; transform: translateX(16px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-16px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
 @keyframes pulse-dot {
-  0%, 100% { opacity: 0.3; transform: scale(0.8); }
-  50%       { opacity: 1;   transform: scale(1.2); }
-}
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-@keyframes shimmer {
-  from { background-position: -200% 0; }
-  to   { background-position: 200% 0; }
-}
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50%       { opacity: 1;   transform: scale(1.18); }
 }
 
-.animate-fade-in-up  { animation: fadeInUp 0.5s ease both; }
-.animate-fade-in     { animation: fadeIn 0.4s ease both; }
-.animate-slide-right { animation: slideInRight 0.35s ease both; }
-.animate-slide-left  { animation: slideInLeft 0.35s ease both; }
+@keyframes float-organic {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-7px) rotate(1.5deg); }
+}
 
+@keyframes breathing-glow {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50%      { transform: scale(1.08); opacity: 0.95; }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(44px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(44px) rotate(-360deg); }
+}
+
+@keyframes orbit-reverse {
+  from { transform: rotate(360deg) translateX(68px) rotate(-360deg); }
+  to   { transform: rotate(0deg) translateX(68px) rotate(0deg); }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.92); opacity: 0.8; }
+  50%  { transform: scale(1.04); opacity: 0.3; }
+  100% { transform: scale(0.92); opacity: 0.8; }
+}
+
+@keyframes voice-wave {
+  0%, 100% { height: 6px; }
+  50%      { height: 20px; }
+}
+
+@keyframes spin-once {
+  from { transform: rotate(-90deg); }
+  to   { transform: rotate(0deg); }
+}
+
+/* Animation utility classes */
+.animate-fade-in-up  { animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in     { animation: fadeIn 0.35s ease both; }
+.animate-slide-right { animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-slide-left  { animation: slideInLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-float       { animation: float-organic 6s ease-in-out infinite; }
+.animate-spin-once   { animation: spin-once 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Living companion styling */
+.companion-orb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+.companion-orb:hover {
+  transform: scale(1.04);
+}
+
+.companion-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(28px);
+  background: radial-gradient(circle, var(--forest-light) 0%, transparent 70%);
+  animation: breathing-glow 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.companion-ring {
+  position: absolute;
+  border: 1px dashed var(--mint-dark);
+  border-radius: 50%;
+  animation: pulse-ring 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Typing Dots */
 .typing-dot {
-  width: 7px; height: 7px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--forest-light);
   animation: pulse-dot 1.2s ease infinite;
@@ -107,9 +207,30 @@ body {
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-.cursor-blink::after {
-  content: "|";
-  animation: blink 1s step-end infinite;
-  margin-left: 2px;
-  color: var(--forest-light);
+/* Voice recording wave bars */
+.voice-wave-bar {
+  width: 3px;
+  border-radius: 3px;
+  background: var(--red-urgent);
+  animation: voice-wave 0.8s ease-in-out infinite;
+}
+.voice-wave-bar:nth-child(2) { animation-delay: 0.15s; }
+.voice-wave-bar:nth-child(3) { animation-delay: 0.3s; }
+.voice-wave-bar:nth-child(4) { animation-delay: 0.45s; }
+
+/* Microinteraction helper for interactive elements */
+.interactive-tap {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.interactive-tap:active {
+  transform: scale(0.97);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001s !important;
+  }
 }

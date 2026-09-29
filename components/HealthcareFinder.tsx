@@ -27,6 +27,7 @@ import {
   validateIndianPin,
   SAMPLE_PINS,
 } from "@/lib/providers";
+import { ThemeToggle } from "./ThemeProvider";
 
 interface HealthcareFinderProps {
   onBack: () => void;
@@ -50,7 +51,7 @@ export default function HealthcareFinder({
   const initialCategory: CareCategory =
     urgency === "emergency" ? "emergency" : urgency === "urgent" ? "hospital" : "all";
 
-  const [pinCode, setPinCode] = useState("560001");
+  const [pinCode, setPinCode] = useState("110001");
   const [activeCategory, setActiveCategory] = useState<CareCategory>(initialCategory);
   const [providers, setProviders] = useState<HealthcareProvider[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -210,6 +211,7 @@ export default function HealthcareFinder({
               <span>New assessment</span>
             </button>
           )}
+          <ThemeToggle />
         </div>
       </header>
 
@@ -536,7 +538,7 @@ export default function HealthcareFinder({
               Showing facilities around PIN <strong>{pinCode}</strong> ({providers.length} found)
             </div>
             <div style={{ fontStyle: "italic", fontSize: 12 }}>
-              Demonstration provider data · Live Maps API ready
+              Source: India Hospital Directory (NHP / Living Atlas)
             </div>
           </div>
 
@@ -576,8 +578,12 @@ export default function HealthcareFinder({
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {providers.map((p) => {
                 const isEmg = p.category === "emergency" || p.emergencyAvailable;
+                const mapsQuery =
+                  typeof p.lat === "number" && typeof p.lon === "number"
+                    ? `${p.lat},${p.lon}`
+                    : `${p.name}, ${p.address}`;
                 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                  `${p.name}, ${p.address}`
+                  mapsQuery
                 )}`;
 
                 return (
@@ -720,15 +726,17 @@ export default function HealthcareFinder({
                         <Clock size={14} color="var(--charcoal-light)" style={{ flexShrink: 0 }} />
                         <span>{p.hours}</span>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <Phone size={14} color="var(--charcoal-light)" style={{ flexShrink: 0 }} />
-                        <a
-                          href={`tel:${p.phone.replace(/\s+/g, "")}`}
-                          style={{ color: "inherit", textDecoration: "none", fontWeight: 500 }}
-                        >
-                          {p.phone}
-                        </a>
-                      </div>
+                      {p.phone && (
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <Phone size={14} color="var(--charcoal-light)" style={{ flexShrink: 0 }} />
+                          <a
+                            href={`tel:${p.phone.replace(/\s+/g, "")}`}
+                            style={{ color: "inherit", textDecoration: "none", fontWeight: 500 }}
+                          >
+                            {p.phone}
+                          </a>
+                        </div>
+                      )}
                     </div>
 
                     {/* Actions */}
@@ -760,27 +768,29 @@ export default function HealthcareFinder({
                         <ExternalLink size={12} style={{ opacity: 0.7 }} />
                       </a>
 
-                      <a
-                        href={`tel:${p.phone.replace(/\s+/g, "")}`}
-                        style={{
-                          background: "var(--mint)",
-                          color: "var(--forest-mid)",
-                          border: "1px solid var(--mint-dark)",
-                          borderRadius: "var(--radius-xs)",
-                          padding: "10px 16px",
-                          fontSize: 13.5,
-                          fontWeight: 600,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 6,
-                          textDecoration: "none",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        <Phone size={14} />
-                        <span>Call Facility</span>
-                      </a>
+                      {p.phone && (
+                        <a
+                          href={`tel:${p.phone.replace(/\s+/g, "")}`}
+                          style={{
+                            background: "var(--mint)",
+                            color: "var(--forest-mid)",
+                            border: "1px solid var(--mint-dark)",
+                            borderRadius: "var(--radius-xs)",
+                            padding: "10px 16px",
+                            fontSize: 13.5,
+                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 6,
+                            textDecoration: "none",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <Phone size={14} />
+                          <span>Call Facility</span>
+                        </a>
+                      )}
                     </div>
                   </div>
                 );
@@ -803,36 +813,41 @@ export default function HealthcareFinder({
             >
               <div style={{ fontSize: 36, marginBottom: 12 }}>🏥</div>
               <h3 style={{ margin: "0 0 8px", fontSize: 17, color: "var(--charcoal)" }}>
-                No Facilities Found for this Category
+                {activeCategory === "all"
+                  ? "No Facilities Found for this PIN"
+                  : "No Facilities Found for this Category"}
               </h3>
               <p
                 style={{
                   fontSize: 14,
                   color: "var(--charcoal-light)",
-                  maxWidth: 420,
+                  maxWidth: 440,
                   margin: "0 auto 16px",
                   lineHeight: 1.5,
                 }}
               >
-                No matching healthcare providers in category &ldquo;{activeCategory}&rdquo; for PIN {pinCode}.
-                Try selecting &ldquo;All Facilities&rdquo; or a different PIN code.
+                {activeCategory === "all"
+                  ? `No healthcare facilities were found for PIN ${pinCode} in the India Hospital Directory dataset. Try another nearby 6-digit postal PIN code.`
+                  : `No matching healthcare facilities in category "${activeCategory}" for PIN ${pinCode} in the directory dataset. Try selecting "All Facilities" or entering another PIN.`}
               </p>
-              <button
-                type="button"
-                onClick={() => handleCategoryChange("all")}
-                style={{
-                  background: "var(--forest)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "var(--radius-xs)",
-                  padding: "8px 18px",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Show All Facilities
-              </button>
+              {activeCategory !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => handleCategoryChange("all")}
+                  style={{
+                    background: "var(--forest)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "var(--radius-xs)",
+                    padding: "8px 18px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Show All Facilities
+                </button>
+              )}
             </div>
           )}
 
@@ -955,7 +970,7 @@ export default function HealthcareFinder({
                 margin: 0,
               }}
             >
-              <strong>Disclaimer:</strong> Provider listings and operational hours are demonstration data for navigation purposes. Always verify open hours directly with the facility. In any life-threatening situation, immediately contact national emergency services or visit the nearest casualty department.
+              <strong>Data Source & Attribution:</strong> Facility data is sourced from the public Hospital Directory of India (National Health Portal / Living Atlas). Listings reflect facilities available in the directory for the specified postal PIN. Always verify operating hours and emergency availability directly with the facility. In any life-threatening emergency, call 112 or visit the nearest hospital casualty immediately.
             </p>
           </footer>
         </div>
