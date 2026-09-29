@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 
-/** Current production model — update here if Google deprecates again */
-const GEMINI_MODEL = "gemini-3.8-flash";
+/** OpenRouter production model */
+const OPENROUTER_MODEL = "inclusionai/ling-3.0-flash-sante:free";
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // ---------------------------------------------------------------------------
 // System prompt — health triage assistant
@@ -59,7 +59,7 @@ const FALLBACK_TURNS: { keywords: string[]; response: string }[] = [
   {
     keywords: [],
     response:
-      "Hi, I'm Nivara — your health triage assistant. I'm currently running in **demo mode** (no AI key configured), so my responses are pre-scripted. To enable the full AI experience, add your Gemini API key.\n\nThat said, I'd love to hear what you're experiencing. Can you describe your main symptom?",
+      "Hi, I'm Nivara — your health triage assistant. I'm currently running in **demo mode** (no AI key configured), so my responses are pre-scripted. To enable the full AI experience, add your OPENROUTER_API_KEY.\n\nThat said, I'd love to hear what you're experiencing. Can you describe your main symptom?",
   },
   {
     keywords: ["head", "headache", "migraine"],
@@ -99,9 +99,9 @@ function getFallbackResponse(history: { role: string; content: string }[]): stri
   "status": "Assessment Complete",
   "urgency": "moderate",
   "symptoms": "as described in conversation (demo mode)",
-  "summary": "This is a demonstration response. In real usage, Nivara would analyse your specific symptoms and conversation history using Gemini AI to produce a personalised assessment. Based on what you described, a moderate-urgency evaluation is shown here as an example.",
+  "summary": "This is a demonstration response. In real usage, Nivara would analyse your specific symptoms and conversation history using OpenRouter AI to produce a personalised assessment. Based on what you described, a moderate-urgency evaluation is shown here as an example.",
   "possible_explanations": "• Demo explanation 1 — real AI would list plausible causes here\\n• Demo explanation 2 — based on your specific reported symptoms\\n• Demo explanation 3 — considering your described history",
-  "recommended_action": "This is demo mode. Please add your GEMINI_API_KEY to .env.local to receive a real AI-powered assessment.",
+  "recommended_action": "This is demo mode. Please add your OPENROUTER_API_KEY to .env.local to receive a real AI-powered assessment.",
   "self_care": "Stay hydrated, rest, and monitor your symptoms. Track any changes.",
   "warning_signs": "• Symptoms suddenly worsen\\n• You develop fever above 39°C / 102°F\\n• Chest pain or difficulty breathing\\n• Confusion or loss of consciousness"
 }
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
 
   // --- Fallback mode (no API key) ---
   if (!apiKey) {
@@ -173,60 +173,75 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // --- Gemini call (with retry for transient 503 overload) ---
-  const ai = new GoogleGenAI({ apiKey });
-
-  // Build history (all messages except the last one)
-  const history = messages.slice(0, -1).map((msg) => ({
-    role: msg.role === "assistant" ? "model" : "user",
-    parts: [{ text: msg.content }],
-  }));
-
-  const lastMessage = messages[messages.length - 1];
+  // Build full message thread with system prompt
+  const openRouterMessages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    ...messages.map((m) => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: m.content,
+    })),
+  ];
 
   const MAX_RETRIES = 2;
   let lastError: unknown;
+  let lastStatus = 0;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const chat = ai.chats.create({
-        model: GEMINI_MODEL,
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-          temperature: 0.65,
-          maxOutputTokens: 1200,
+      const response = await fetch(OPENROUTER_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://nivara.health",
+          "X-Title": "Nivara Health Assistant",
         },
-        history,
+        body: JSON.stringify({
+          model: OPENROUTER_MODEL,
+          messages: openRouterMessages,
+          temperature: 0.65,
+          max_tokens: 1200,
+        }),
       });
 
-      const response = await chat.sendMessage({
-        message: lastMessage.content,
-      });
+      lastStatus = response.status;
 
-      const text = response.text;
-
-      if (!text || typeof text !== "string") {
-        throw new Error("Empty or unparseable response from AI");
+      if (!response.ok) {
+        let errorDetail = "";
+        try {
+          const errData = await response.json();
+          errorDetail = errData?.error?.message || response.statusText;
+        } catch {
+          errorDetail = response.statusText;
+        }
+        throw new Error(`OpenRouter HTTP ${response.status}: ${errorDetail}`);
       }
 
-      console.log(`[Nivara] Gemini responded OK (attempt ${attempt + 1}), length: ${text.length}`);
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content;
+
+      if (!text || typeof text !== "string") {
+        throw new Error("Empty or unparseable response from AI provider");
+      }
+
       return NextResponse.json({ content: text, fallback: false });
 
     } catch (err: unknown) {
       lastError = err;
       const msg = err instanceof Error ? err.message : String(err);
-      const isOverloaded =
+      const isRetryable =
+        lastStatus === 429 ||
+        lastStatus === 502 ||
+        lastStatus === 503 ||
+        lastStatus === 504 ||
         msg.includes("503") ||
-        msg.includes("UNAVAILABLE") ||
+        msg.includes("502") ||
         msg.includes("overload") ||
-        msg.includes("high demand");
+        msg.includes("rate limit") ||
+        msg.includes("fetch failed");
 
-      console.error(`[Nivara] Gemini attempt ${attempt + 1} failed:`, msg.slice(0, 300));
-
-      if (isOverloaded && attempt < MAX_RETRIES) {
-        // Exponential backoff: attempt 0 -> 1500ms, attempt 1 -> 3000ms
+      if (isRetryable && attempt < MAX_RETRIES) {
         const delay = 1500 * Math.pow(2, attempt);
-        console.log(`[Nivara] Retrying in ${delay}ms (retry ${attempt + 1}/${MAX_RETRIES})…`);
         await new Promise((r) => setTimeout(r, delay));
         continue;
       }
@@ -236,43 +251,39 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // All attempts exhausted — classify the error
+  // All attempts exhausted — classify error safely without leaking keys
   const errMsg = lastError instanceof Error ? lastError.message : String(lastError);
-  console.error("[Nivara] All Gemini attempts failed. Final error:", errMsg.slice(0, 400));
 
-  const is503OrOverloaded =
-    errMsg.includes("503") ||
-    errMsg.includes("overload") ||
-    errMsg.includes("UNAVAILABLE") ||
-    errMsg.includes("high demand");
-
-  if (is503OrOverloaded) {
-    const history = messages.map((m) => ({ role: m.role, content: m.content }));
-    const fallbackText = getFallbackResponse(history);
-    console.log("[Nivara] Gemini 503/high-demand: returning safe fallback response.");
-    return NextResponse.json({
-      content: `*(The live AI service is currently experiencing high demand. Nivara is temporarily providing guidance in demo/fallback mode.)*\n\n${fallbackText}`,
-      fallback: true,
-    });
-  }
-
-  if (errMsg.includes("API_KEY_INVALID") || errMsg.includes("401") || errMsg.includes("API key")) {
+  if (lastStatus === 401 || lastStatus === 403 || errMsg.includes("401") || errMsg.includes("403")) {
     return NextResponse.json(
       { error: "Nivara's AI service could not authenticate. Please check that your API key is valid." },
       { status: 503 }
     );
   }
-  if (errMsg.includes("404") || errMsg.includes("no longer available") || errMsg.includes("NOT_FOUND")) {
-    return NextResponse.json(
-      { error: "The AI model is unavailable. Please contact support or try again later." },
-      { status: 503 }
-    );
-  }
-  if (errMsg.includes("429") || errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED")) {
+
+  if (lastStatus === 429 || errMsg.includes("429") || errMsg.includes("rate limit") || errMsg.includes("quota")) {
     return NextResponse.json(
       { error: "The AI service is over its usage limit right now. Please try again in a few minutes." },
       { status: 503 }
     );
+  }
+
+  // For temporary provider overload, provide safe guided fallback response
+  if (
+    lastStatus === 502 ||
+    lastStatus === 503 ||
+    lastStatus === 504 ||
+    errMsg.includes("502") ||
+    errMsg.includes("503") ||
+    errMsg.includes("504") ||
+    errMsg.includes("overload")
+  ) {
+    const history = messages.map((m) => ({ role: m.role, content: m.content }));
+    const fallbackText = getFallbackResponse(history);
+    return NextResponse.json({
+      content: `*(The live AI service is currently experiencing high demand. Nivara is temporarily providing guidance in demo/fallback mode.)*\n\n${fallbackText}`,
+      fallback: true,
+    });
   }
 
   return NextResponse.json(
