@@ -186,10 +186,9 @@ export function urgencyConfig(level: UrgencyLevel) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Strip the raw JSON block from a message before display
-// (so users see the human-readable text, not the JSON)
-// ---------------------------------------------------------------------------
 export function stripTriageBlock(content: string): string {
-  return content.replace(TRIAGE_DELIMITER_RE, "").trim();
+  return content
+    .replace(/```TRIAGE_ASSESSMENT[\s\S]*?(?:```|$)/gi, "")
+    .replace(/```json\s*\{[\s\S]*?"(?:urgency|status)"[\s\S]*?(?:```|$)/gi, "")
+    .trim();
 }

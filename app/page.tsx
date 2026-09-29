@@ -27,9 +27,9 @@ export default function Home() {
 
   const handleStart = () => setView("chat");
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const text = input;
+  const handleSend = async (overrideText?: string) => {
+    const text = (typeof overrideText === "string" ? overrideText : input).trim();
+    if (!text || isLoading) return;
     setInput("");
     await sendMessage(text);
   };
