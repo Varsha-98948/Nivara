@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /** OpenRouter production model */
-const OPENROUTER_MODEL = "inclusionai/ling-3.0-flash-sante:free";
+const OPENROUTER_MODEL = "openrouter/free";
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // ---------------------------------------------------------------------------
